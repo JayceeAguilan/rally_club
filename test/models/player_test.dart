@@ -113,6 +113,44 @@ void main() {
 
         expect(map['createdAt'], '2025-01-01');
       });
+
+      test('profile update map contains only editable fields', () {
+        final p = Player(
+          id: 'p3',
+          name: 'Gina',
+          gender: 'Female',
+          skillLevel: 'Adv',
+          isAvailable: true,
+          notes: 'Ready to play',
+          lastResult: 'win',
+          isActive: false,
+          createdAt: '2025-01-01',
+          profileImageBase64: 'abc123',
+          clubId: 'club-1',
+          ownerUid: 'user-1',
+          isLegacy: true,
+        );
+
+        final map = p.toProfileUpdateMap();
+
+        expect(
+          map.keys.toSet(),
+          {
+            'name',
+            'gender',
+            'skillLevel',
+            'isAvailable',
+            'notes',
+            'profileImageBase64',
+            'updatedAt',
+          },
+        );
+        expect(map['name'], 'Gina');
+        expect(map['isAvailable'], 1);
+        expect(map.containsKey('clubId'), isFalse);
+        expect(map.containsKey('ownerUid'), isFalse);
+        expect(map.containsKey('countsAsPlayer'), isFalse);
+      });
     });
 
     group('toMap / fromMap round-trip', () {

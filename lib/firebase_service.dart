@@ -143,19 +143,7 @@ class FirebaseService {
 
     final existingData = existingDoc.data()!;
     existingData['id'] = existingDoc.id;
-    final existingPlayer = Player.fromMap(existingData);
-
-    final Map<String, dynamic> data = player
-        .copyWith(
-          createdAt: existingPlayer.createdAt,
-          lastResult: existingPlayer.lastResult,
-          isActive: existingPlayer.isActive,
-          clubId: existingPlayer.clubId,
-          ownerUid: existingPlayer.ownerUid,
-          isLegacy: existingPlayer.isLegacy,
-          countsAsPlayer: existingPlayer.countsAsPlayer,
-        )
-        .toMap();
+    final data = player.toProfileUpdateMap();
     await _db.collection('players').doc(player.id).update(data);
   }
 

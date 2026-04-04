@@ -78,6 +78,18 @@ class Player {
     );
   }
 
+  Map<String, dynamic> toProfileUpdateMap() {
+    return {
+      'name': name,
+      'gender': gender,
+      'skillLevel': skillLevel,
+      'isAvailable': isAvailable ? 1 : 0,
+      'notes': notes,
+      'profileImageBase64': profileImageBase64,
+      'updatedAt': DateTime.now().toIso8601String(),
+    };
+  }
+
   bool isOwnedByUser({String? linkedPlayerId, String? userUid}) {
     if (linkedPlayerId != null && linkedPlayerId.isNotEmpty && id == linkedPlayerId) {
       return true;
