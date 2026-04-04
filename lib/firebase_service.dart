@@ -66,6 +66,14 @@ class FirebaseService {
       return;
     }
 
+    final userData = await _getUserData(uid);
+    final linkedPlayerId = userData['playerId'] as String?;
+    final userClubId = userData['clubId'] as String?;
+
+    if (linkedPlayerId == playerId && userClubId == clubId) {
+      return;
+    }
+
     final playerDoc = await _db.collection('players').doc(playerId).get();
     if (!playerDoc.exists) {
       throw StateError('Player profile not found.');

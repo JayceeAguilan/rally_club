@@ -31,9 +31,23 @@ service cloud.firestore {
         && !exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
-    function ownProfileUpdateAllowed() {
+    function currentUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isLinkedOwnPlayer(playerId, clubId) {
       return isSignedIn()
-        && resource.data.ownerUid == request.auth.uid
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && currentUserData().playerId == playerId
+        && currentUserData().clubId == clubId;
+    }
+
+    function ownProfileUpdateAllowed(playerId) {
+      return isSignedIn()
+        && (
+          resource.data.ownerUid == request.auth.uid
+          || isLinkedOwnPlayer(playerId, resource.data.clubId)
+        )
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'name',
           'gender',
@@ -47,18 +61,21 @@ service cloud.firestore {
 
     function ownParticipationSyncAllowed(playerId) {
       return isSignedIn()
-        && resource.data.ownerUid == request.auth.uid
+        && (
+          resource.data.ownerUid == request.auth.uid
+          || isLinkedOwnPlayer(playerId, resource.data.clubId)
+        )
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.playerId == playerId
+        && currentUserData().playerId == playerId
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'countsAsPlayer',
           'isAvailable',
           'updatedAt',
         ])
         && request.resource.data.countsAsPlayer ==
-          (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ? 0 : 1)
+          (currentUserData().role == 'admin' ? 0 : 1)
         && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+          currentUserData().role == 'admin'
             ? request.resource.data.isAvailable == 0
             : request.resource.data.isAvailable == resource.data.isAvailable
         );
@@ -76,7 +93,24 @@ service cloud.firestore {
 
     // Users: only the owner can read/write their own user doc
     match /users/{uid} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read: if isSignedIn() && request.auth.uid == uid;
+
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.email is string
+        && request.resource.data.playerId is string
+        && request.resource.data.clubId is string
+        && request.resource.data.role == 'member'
+        && request.resource.data.joinedAt is string;
+
+      allow update: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'announcementLastSeenAt',
+        ]);
+
+      allow delete: if false;
     }
 
     // Clubs: any authenticated user can read; no client writes
@@ -92,7 +126,7 @@ service cloud.firestore {
       allow create: if initialOwnPlayerCreateAllowed()
         || isAdminForClub(request.resource.data.clubId);
 
-      allow update: if ownProfileUpdateAllowed()
+      allow update: if ownProfileUpdateAllowed(playerId)
         || ownParticipationSyncAllowed(playerId)
         || isAdminForClub(resource.data.clubId)
         || adminOnlyPlayerResultUpdate();
