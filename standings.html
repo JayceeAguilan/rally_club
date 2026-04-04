@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KINETIC COURT | Standings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-dim": "#484f65",
+              "surface-dim": "#c3d5f8",
+              "on-surface": "#242f41",
+              "on-tertiary-fixed-variant": "#655500",
+              "surface-tint": "#4e6300",
+              "tertiary-container": "#f9d940",
+              "tertiary-dim": "#5e4f00",
+              "inverse-surface": "#040e1f",
+              "error-dim": "#b92902",
+              "surface-container": "#dee8ff",
+              "on-tertiary": "#fff2ca",
+              "tertiary-fixed-dim": "#eacb32",
+              "on-surface-variant": "#515c70",
+              "primary-container": "#cafd00",
+              "surface-variant": "#cdddfe",
+              "on-tertiary-fixed": "#453900",
+              "error": "#b02500",
+              "surface-bright": "#f4f6ff",
+              "outline-variant": "#a2adc4",
+              "secondary-container": "#dae2fd",
+              "on-secondary-fixed": "#373f54",
+              "surface": "#f4f6ff",
+              "outline": "#6c778c",
+              "surface-container-high": "#d5e3ff",
+              "tertiary": "#6b5b00",
+              "primary-fixed-dim": "#beee00",
+              "primary-fixed": "#cafd00",
+              "secondary-fixed": "#dae2fd",
+              "on-primary": "#e1ff88",
+              "primary": "#4e6300",
+              "on-primary-fixed": "#3a4a00",
+              "on-error": "#ffefec",
+              "secondary": "#535b71",
+              "surface-container-lowest": "#ffffff",
+              "on-background": "#242f41",
+              "surface-container-highest": "#cdddfe",
+              "inverse-on-surface": "#929db4",
+              "secondary-fixed-dim": "#ccd4ee",
+              "inverse-primary": "#cafd00",
+              "on-secondary-fixed-variant": "#535b71",
+              "surface-container-low": "#ecf1ff",
+              "on-primary-fixed-variant": "#526900",
+              "primary-dim": "#435600",
+              "on-primary-container": "#4a5e00",
+              "on-error-container": "#520c00",
+              "on-secondary-container": "#4a5167",
+              "background": "#f4f6ff",
+              "on-tertiary-container": "#5a4c00",
+              "tertiary-fixed": "#f9d940",
+              "error-container": "#f95630",
+              "on-secondary": "#f0f2ff"
+            },
+            fontFamily: {
+              "headline": ["Lexend"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .lexend { font-family: 'Lexend', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#f4f6ff]/70 backdrop-blur-xl">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#4e6300]">menu</span>
+<span class="text-xl font-black text-[#242f41] italic tracking-tighter lexend">KINETIC COURT</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#4e6300]">search</span>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-screen-xl mx-auto">
+<!-- Hero Editorial Section -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="max-w-xl">
+<span class="text-secondary font-bold tracking-widest text-[10px] uppercase mb-2 block">Season 2024 / Elite League</span>
+<h1 class="text-on-background lexend font-black text-5xl md:text-7xl leading-none tracking-tighter uppercase">Club Standings</h1>
+</div>
+<div class="bg-surface-container-high rounded-xl p-4 flex gap-8 items-center">
+<div>
+<p class="text-[10px] uppercase font-bold text-secondary tracking-widest">Next Payout</p>
+<p class="text-xl font-black lexend">$2,400</p>
+</div>
+<div class="w-px h-8 bg-outline-variant/30"></div>
+<div>
+<p class="text-[10px] uppercase font-bold text-secondary tracking-widest">Days Left</p>
+<p class="text-xl font-black lexend text-primary">14</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Sorting & Filter Tonal Bar -->
+<section class="mb-8 sticky top-16 z-40 bg-background/95 backdrop-blur-md py-4">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div class="flex gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+<button class="bg-primary-container text-on-primary-container px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest shadow-sm">Win %</button>
+<button class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-surface-container-high transition-colors">Wins</button>
+<button class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-surface-container-high transition-colors">Losses</button>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-xl border-none">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+<span class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Skill: Pro (4.5+)</span>
+</div>
+</div>
+</section>
+<!-- Podium / Top 3 Featured (Bento Style) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<!-- Rank 2 -->
+<div class="order-2 md:order-1 bg-surface-container-lowest rounded-[2rem] p-8 flex flex-col items-center justify-center relative overflow-hidden group">
+<div class="absolute -top-4 -right-4 text-surface-container-high font-black lexend text-8xl opacity-40 italic">02</div>
+<img class="w-24 h-24 rounded-full object-cover mb-4 border-4 border-surface-container" data-alt="professional pickleball player portrait in athletic gear smiling outdoors with soft sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwsYDTTXzlW1qtxRKMmkikbpGISE0d4E6YB4MD8lGH37gD3r0rI38B_RZiDR7ovuwkLIUqqGp3ZQg6BIlLh5x8FOO5nPlIwM1YUawv6HPLJFhEh3v_76TNetiTNIVZMhd1zO2kf57JlDCNluHzErLnKhB23KF3CtezY8hkksBjh2KMBUoxn4vxF1LQDVTg0819Fm914DWG5zi3OCc2snuJYSAE-XuH5qIosg29jeX_T4xmzTCkdxz4U5zySYfQNapVkJrTRz994Hg"/>
+<h3 class="lexend font-bold text-xl text-on-surface">Alex Rivera</h3>
+<p class="text-secondary text-xs font-medium uppercase tracking-widest mb-4">4.8 Rating • Male</p>
+<div class="flex gap-6">
+<div class="text-center">
+<span class="block text-[10px] text-secondary font-bold">W-L</span>
+<span class="font-black">42-8</span>
+</div>
+<div class="text-center">
+<span class="block text-[10px] text-secondary font-bold text-primary">WIN%</span>
+<span class="font-black text-primary">84%</span>
+</div>
+</div>
+</div>
+<!-- Rank 1 (Main Feature) -->
+<div class="order-1 md:order-2 bg-primary-container rounded-[2rem] p-10 flex flex-col items-center justify-center relative overflow-hidden group scale-105 shadow-xl shadow-primary/10">
+<div class="absolute -top-6 -right-6 text-on-primary-container font-black lexend text-9xl opacity-20 italic">01</div>
+<div class="bg-primary px-4 py-1 rounded-full text-on-primary text-[10px] font-black uppercase tracking-widest mb-4">Current Leader</div>
+<img class="w-32 h-32 rounded-full object-cover mb-4 border-4 border-white" data-alt="female professional athlete in sports wear focus expression sunlight outdoors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4mVQ2LeNqhTXtd6pumBfPAn6MiFr9T9mTi5gvkSmYUsgRyvb76v2zOLVHVnTv3jnbs1wZtcltPTtQfcHjmGWIU6eZpl4AHkIGPZ6L5W-RSTNihQxaSj658E4Rjy7xP4GxiI7l8N6lsnFbDvtJulO3Ufh__qhr7rJQQHJlKkacGxaOTPBjqayf3PdD1UyCDBm_U37wdB0ynGOVwi9MYm4DYaXnVIxDHAJmxCcsQpYBmUqR2RETGITEjhrmjoIJcOTGJFKemJ62z0g"/>
+<h3 class="lexend font-black text-2xl text-on-primary-container">Sarah Jenkins</h3>
+<p class="text-on-primary-container/70 text-xs font-bold uppercase tracking-widest mb-6">5.2 Rating • Female</p>
+<div class="grid grid-cols-3 gap-8 w-full border-t border-on-primary-container/10 pt-6">
+<div class="text-center border-r border-on-primary-container/10">
+<span class="block text-[10px] text-on-primary-container/60 font-bold uppercase">Wins</span>
+<span class="font-black text-2xl">56</span>
+</div>
+<div class="text-center border-r border-on-primary-container/10">
+<span class="block text-[10px] text-on-primary-container/60 font-bold uppercase">Losses</span>
+<span class="font-black text-2xl">4</span>
+</div>
+<div class="text-center">
+<span class="block text-[10px] text-on-primary-container/60 font-bold uppercase">Win %</span>
+<span class="font-black text-2xl text-primary">93%</span>
+</div>
+</div>
+</div>
+<!-- Rank 3 -->
+<div class="order-3 md:order-3 bg-surface-container-lowest rounded-[2rem] p-8 flex flex-col items-center justify-center relative overflow-hidden group">
+<div class="absolute -top-4 -right-4 text-surface-container-high font-black lexend text-8xl opacity-40 italic">03</div>
+<img class="w-24 h-24 rounded-full object-cover mb-4 border-4 border-surface-container" data-alt="young man athlete posing with pickleball paddle professional studio lighting sports portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBY9JGAt721FwzI3LNTIYWb5tB1xoUuSK2UH3eCwMw1KJJ7DvavvW11oD0x5k0Gse9vVBmqjfqT7t5dWCwg_rarzqCX96goniRW4F-ODg6EJgtKSARpgkN11MUjeA59eRmhpatENqTbAf4u0YBy0J4KhfeIdDKd_qJIm571ve_LQWnc6-iWfQachsWAKCIG8rlMSM3vDeAuXKl7r9BybLLgiXi8QnkRpmm0uoxRiuT5loORLBbxfQy675s7kKyVCa32qAmwVeu2CI4"/>
+<h3 class="lexend font-bold text-xl text-on-surface">Jordan Lee</h3>
+<p class="text-secondary text-xs font-medium uppercase tracking-widest mb-4">4.6 Rating • Male</p>
+<div class="flex gap-6">
+<div class="text-center">
+<span class="block text-[10px] text-secondary font-bold">W-L</span>
+<span class="font-black">38-12</span>
+</div>
+<div class="text-center">
+<span class="block text-[10px] text-secondary font-bold text-primary">WIN%</span>
+<span class="font-black text-primary">76%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Standings Table (No-Line Editorial Style) -->
+<section class="bg-surface-container-low rounded-[2rem] p-4 md:p-8">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-[10px] uppercase font-black text-secondary tracking-widest">
+<th class="pb-6 pl-4">Rank</th>
+<th class="pb-6">Player</th>
+<th class="pb-6 hidden md:table-cell">Gender</th>
+<th class="pb-6 hidden md:table-cell">Skill</th>
+<th class="pb-6 text-center">W</th>
+<th class="pb-6 text-center">L</th>
+<th class="pb-6 text-right pr-4">Win %</th>
+</tr>
+</thead>
+<tbody class="space-y-2">
+<!-- Row 4 -->
+<tr class="bg-surface-container-lowest hover:bg-white transition-all rounded-xl">
+<td class="py-5 pl-6 lexend font-black text-xl text-outline italic">04</td>
+<td class="py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a confident female athlete in activewear" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuBlkl4ieloYJUA1m27TjZ-p6Yh7MJoZfIkmqtYhwMLXA30bDKAWMxAZUcmvWdkEwZPc57L7zuk6Gr3hF2By7y3J28sGvWbOHY7vOTJqjBcV0fa8FTfeQGd880rIhj2yP1g-cywu41dWYXxL3OeASp1wyLRQC-B4GyYZS18XBO6LhTCFMH6xboGLVh40f7c8ReI7aI7HD7XMf9Jttuz3fZ5BwaibUux9MzKybus9jK0_ih3i3JkLCJYoi1u8Ri6ST_e2kQ-a8qrCQ"/>
+</div>
+<div>
+<p class="font-bold text-on-surface text-sm">Marcus Chen</p>
+<p class="text-[10px] font-bold text-secondary uppercase md:hidden">4.4 • M</p>
+</div>
+</div>
+</td>
+<td class="py-5 hidden md:table-cell text-sm font-medium text-secondary">Male</td>
+<td class="py-5 hidden md:table-cell text-sm font-bold">4.4</td>
+<td class="py-5 text-center font-bold">35</td>
+<td class="py-5 text-center font-bold">15</td>
+<td class="py-5 text-right pr-6">
+<span class="bg-surface-container text-primary font-black px-3 py-1 rounded-md text-sm">70.0%</span>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="bg-surface-container-lowest hover:bg-white transition-all rounded-xl">
+<td class="py-5 pl-6 lexend font-black text-xl text-outline italic">05</td>
+<td class="py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="close up headshot of a sporty man with athletic headband" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB68fO0fcpmI84U--n6y9ziCWsfDULQfo3Z7X8eXgnPhng8gOr-3nKWb53HFAlojTbGzeDTvP1z-xFeNyXdJ0I290QLf7rOiYoTAwrxBcbNu1ri_HltcxGfiKt-i44ZvS4v80trFdChzPWE1kiyzcGBalH0Tf_LBiafMkk0PGakeSXyHphy6ZzeSq3uc6q67-QH96l36GC9sr_n7oxeCAduenmG7WQZpb5d8XNDNSOZKUb6mN_7RcMXQUQRspIydoH1yuVNXWOCd8k"/>
+</div>
+<div>
+<p class="font-bold text-on-surface text-sm">Elena Rodriguez</p>
+<p class="text-[10px] font-bold text-secondary uppercase md:hidden">4.5 • F</p>
+</div>
+</div>
+</td>
+<td class="py-5 hidden md:table-cell text-sm font-medium text-secondary">Female</td>
+<td class="py-5 hidden md:table-cell text-sm font-bold">4.5</td>
+<td class="py-5 text-center font-bold">31</td>
+<td class="py-5 text-center font-bold">19</td>
+<td class="py-5 text-right pr-6">
+<span class="bg-surface-container text-primary font-black px-3 py-1 rounded-md text-sm">62.0%</span>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="bg-surface-container-lowest hover:bg-white transition-all rounded-xl">
+<td class="py-5 pl-6 lexend font-black text-xl text-outline italic">06</td>
+<td class="py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="professional athlete man posing with equipment athletic lifestyle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDz4J8j5JJu2ANmmIS6CREPUwQmRjvOTzgieJe0sW7T7mtaquhDd0azvzFRMd6uSaXfW4FTn3FDX-aH1Hn74MpQMLhBwyp8cKw2ar5ftiC-iCgX9BDyKnuZknC1b7XiER7GHn4u-pu4DE0_wPRsXtW8OQOCaSdGwCN7I_CDp1l06YKuqVcJe6jF-tehjjCGSTQ7ImC2KUZI5UelA8slFBW-BrN3aZ9X5-ZzsGZKINc6guiYf6pJyjlIlkjo1I4IXaJyh61Gk7vAtZg"/>
+</div>
+<div>
+<p class="font-bold text-on-surface text-sm">David Miller</p>
+<p class="text-[10px] font-bold text-secondary uppercase md:hidden">4.2 • M</p>
+</div>
+</div>
+</td>
+<td class="py-5 hidden md:table-cell text-sm font-medium text-secondary">Male</td>
+<td class="py-5 hidden md:table-cell text-sm font-bold">4.2</td>
+<td class="py-5 text-center font-bold">28</td>
+<td class="py-5 text-center font-bold">22</td>
+<td class="py-5 text-right pr-6">
+<span class="bg-surface-container text-primary font-black px-3 py-1 rounded-md text-sm">56.0%</span>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="bg-surface-container-lowest hover:bg-white transition-all rounded-xl">
+<td class="py-5 pl-6 lexend font-black text-xl text-outline italic">07</td>
+<td class="py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="woman playing sports action shot motion blur energetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU8r-YXnNq4skHHkUuZMVAmlYyjNgz4tU171NT4R-_ZoPhcCEE0Y6hmrr5ELSE5FZVmFFwNrvx69MZPGCh_7KW4-mmE-Nbx-1nRn_fesUVTUv7lTEk5wJ9L3Nbw-Pw1G6qsDzxYTxBzUPCNX2yNrCkus1vONjNcl2qxza2reJSSrxrMwhKuxpLR-wZ9gDK3w6bIrqqVUJVEylr429DS9MR73gP06Ox1gIcetz6wtDEbMAmyJBSY1MXWNXw6abVSTH_oMlO6BqrTCM"/>
+</div>
+<div>
+<p class="font-bold text-on-surface text-sm">Sophie Turner</p>
+<p class="text-[10px] font-bold text-secondary uppercase md:hidden">4.0 • F</p>
+</div>
+</div>
+</td>
+<td class="py-5 hidden md:table-cell text-sm font-medium text-secondary">Female</td>
+<td class="py-5 hidden md:table-cell text-sm font-bold">4.0</td>
+<td class="py-5 text-center font-bold">25</td>
+<td class="py-5 text-center font-bold">25</td>
+<td class="py-5 text-right pr-6">
+<span class="bg-surface-container text-secondary font-black px-3 py-1 rounded-md text-sm">50.0%</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="mt-8 flex justify-center">
+<button class="bg-on-background text-surface rounded-full px-8 py-3 lexend font-bold uppercase text-xs tracking-[0.2em] hover:bg-secondary-dim transition-all">View All 124 Players</button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 dark:bg-[#242f41]/80 backdrop-blur-2xl rounded-t-[2rem] shadow-[0_-4px_20px_rgba(83,91,113,0.06)] z-50">
+<div class="flex flex-col items-center justify-center text-[#535b71] dark:text-[#d5e3ff] px-5 py-2">
+<span class="material-symbols-outlined mb-1">dashboard</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#535b71] dark:text-[#d5e3ff] px-5 py-2">
+<span class="material-symbols-outlined mb-1">groups</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Players</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#535b71] dark:text-[#d5e3ff] px-5 py-2">
+<span class="material-symbols-outlined mb-1">sports_tennis</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Match</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#cafd00] dark:bg-[#4e6300] text-[#242f41] dark:text-white rounded-2xl px-5 py-2 scale-105 transition-all">
+<span class="material-symbols-outlined mb-1">leaderboard</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Standings</span>
+</div>
+</nav>
+<!-- FAB (Suppressed for Standings per instruction unless perfectly aligned - using "Add Match" as a contextual action) -->
+<div class="fixed bottom-28 right-6 z-40 md:hidden">
+<button class="bg-primary-container p-4 rounded-2xl shadow-xl flex items-center justify-center text-on-primary-container active:scale-95 transition-all">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</div>
+</body></html>

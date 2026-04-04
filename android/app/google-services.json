@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "842671450266",
+    "project_id": "rallyclubapp",
+    "storage_bucket": "rallyclubapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:842671450266:android:eeafb9b4245f4ec84b5723",
+        "android_client_info": {
+          "package_name": "com.example.rally_club"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAybUW3PQncQgTDGUrvTmKDX-mSB9Zbig"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

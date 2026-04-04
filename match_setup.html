@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "secondary-dim": "#484f65",
+            "surface-dim": "#c3d5f8",
+            "on-surface": "#242f41",
+            "on-tertiary-fixed-variant": "#655500",
+            "surface-tint": "#4e6300",
+            "tertiary-container": "#f9d940",
+            "tertiary-dim": "#5e4f00",
+            "inverse-surface": "#040e1f",
+            "error-dim": "#b92902",
+            "surface-container": "#dee8ff",
+            "on-tertiary": "#fff2ca",
+            "tertiary-fixed-dim": "#eacb32",
+            "on-surface-variant": "#515c70",
+            "primary-container": "#cafd00",
+            "surface-variant": "#cdddfe",
+            "on-tertiary-fixed": "#453900",
+            "error": "#b02500",
+            "surface-bright": "#f4f6ff",
+            "outline-variant": "#a2adc4",
+            "secondary-container": "#dae2fd",
+            "on-secondary-fixed": "#373f54",
+            "surface": "#f4f6ff",
+            "outline": "#6c778c",
+            "surface-container-high": "#d5e3ff",
+            "tertiary": "#6b5b00",
+            "primary-fixed-dim": "#beee00",
+            "primary-fixed": "#cafd00",
+            "secondary-fixed": "#dae2fd",
+            "on-primary": "#e1ff88",
+            "primary": "#4e6300",
+            "on-primary-fixed": "#3a4a00",
+            "on-error": "#ffefec",
+            "secondary": "#535b71",
+            "surface-container-lowest": "#ffffff",
+            "on-background": "#242f41",
+            "surface-container-highest": "#cdddfe",
+            "inverse-on-surface": "#929db4",
+            "secondary-fixed-dim": "#ccd4ee",
+            "inverse-primary": "#cafd00",
+            "on-secondary-fixed-variant": "#535b71",
+            "surface-container-low": "#ecf1ff",
+            "on-primary-fixed-variant": "#526900",
+            "primary-dim": "#435600",
+            "on-primary-container": "#4a5e00",
+            "on-error-container": "#520c00",
+            "on-secondary-container": "#4a5167",
+            "background": "#f4f6ff",
+            "on-tertiary-container": "#5a4c00",
+            "tertiary-fixed": "#f9d940",
+            "error-container": "#f95630",
+            "on-secondary": "#f0f2ff"
+          },
+          fontFamily: {
+            "headline": ["Lexend"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-background min-h-screen pb-32">
+<!-- Shared Component: TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#f4f6ff]/70 dark:bg-[#242f41]/70 backdrop-blur-xl">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#4e6300] dark:text-[#cafd00] hover:opacity-80 transition-opacity active:scale-95 duration-150" data-icon="menu">menu</button>
+<h1 class="text-xl font-black text-[#242f41] dark:text-white italic tracking-tighter">KINETIC COURT</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#4e6300] dark:text-[#cafd00] hover:opacity-80 transition-opacity active:scale-95 duration-150" data-icon="search">search</button>
+</div>
+</div>
+</header>
+<main class="max-w-screen-xl mx-auto px-6 pt-24">
+<!-- Screen Header -->
+<div class="mb-10">
+<span class="text-on-surface-variant font-label text-[10px] uppercase tracking-[0.2em] mb-2 block">New Session</span>
+<h2 class="font-headline font-extrabold text-4xl text-on-surface tracking-tight">Match Setup</h2>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: Settings -->
+<div class="lg:col-span-8 space-y-12">
+<!-- Step 1: Game Mode -->
+<section>
+<div class="flex items-end justify-between mb-6">
+<h3 class="font-headline font-bold text-xl flex items-center gap-3">
+<span class="text-primary-container bg-primary rounded-full w-8 h-8 flex items-center justify-center text-xs font-black">01</span>
+              Select Game Mode
+            </h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Singles Card -->
+<label class="relative cursor-pointer group">
+<input class="peer sr-only" name="game_mode" type="radio" value="singles"/>
+<div class="p-6 rounded-xl bg-surface-container-lowest peer-checked:bg-primary peer-checked:text-on-primary transition-all duration-300 shadow-none border-none">
+<div class="flex justify-between items-start mb-8">
+<span class="material-symbols-outlined text-4xl opacity-40 group-hover:opacity-100 transition-opacity" data-icon="person">person</span>
+<div class="w-4 h-4 rounded-full border-2 border-outline-variant peer-checked:border-primary-container flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-primary-container scale-0 peer-checked:scale-100 transition-transform"></div>
+</div>
+</div>
+<h4 class="font-headline font-bold text-2xl mb-1">Singles</h4>
+<p class="text-sm opacity-70">1 vs 1 intense court coverage</p>
+</div>
+</label>
+<!-- Doubles Card (Active) -->
+<label class="relative cursor-pointer group">
+<input checked="" class="peer sr-only" name="game_mode" type="radio" value="doubles"/>
+<div class="p-6 rounded-xl bg-primary text-on-primary peer-checked:bg-primary peer-checked:text-on-primary transition-all duration-300 shadow-none border-none">
+<div class="flex justify-between items-start mb-8">
+<span class="material-symbols-outlined text-4xl" data-icon="groups">groups</span>
+<div class="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container text-xs" data-icon="check">check</span>
+</div>
+</div>
+<h4 class="font-headline font-bold text-2xl mb-1 text-primary-container">Doubles</h4>
+<p class="text-sm opacity-80">2 vs 2 tactical team play</p>
+</div>
+</label>
+</div>
+</section>
+<!-- Step 2: Matching Mode -->
+<section>
+<div class="flex items-end justify-between mb-6">
+<h3 class="font-headline font-bold text-xl flex items-center gap-3">
+<span class="text-primary-container bg-primary rounded-full w-8 h-8 flex items-center justify-center text-xs font-black">02</span>
+              Matching Logic
+            </h3>
+</div>
+<div class="space-y-3">
+<!-- Auto-Balanced -->
+<label class="block cursor-pointer group">
+<input checked="" class="peer sr-only" name="match_logic" type="radio" value="auto"/>
+<div class="flex items-center gap-4 p-5 rounded-xl bg-surface-container transition-all peer-checked:bg-white peer-checked:ring-2 peer-checked:ring-primary-container">
+<div class="bg-surface-container-high p-3 rounded-lg group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="balance">balance</span>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-center">
+<span class="font-headline font-bold text-on-surface">Auto-Balanced</span>
+<span class="text-[10px] bg-primary text-on-primary px-2 py-0.5 rounded-full uppercase font-bold tracking-widest">Recommended</span>
+</div>
+<p class="text-xs text-on-surface-variant">Algorithmically balances teams based on individual skill ratings.</p>
+</div>
+</div>
+</label>
+<!-- Skill-Separated -->
+<label class="block cursor-pointer group">
+<input class="peer sr-only" name="match_logic" type="radio" value="skill"/>
+<div class="flex items-center gap-4 p-5 rounded-xl bg-surface-container transition-all peer-checked:bg-white peer-checked:ring-2 peer-checked:ring-primary-container">
+<div class="bg-surface-container-high p-3 rounded-lg group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="equalizer">equalizer</span>
+</div>
+<div class="flex-grow">
+<span class="font-headline font-bold text-on-surface">Skill-Separated</span>
+<p class="text-xs text-on-surface-variant">Matches players with the exact same skill level together.</p>
+</div>
+</div>
+</label>
+<!-- Winners and Losers -->
+<label class="block cursor-pointer group">
+<input class="peer sr-only" name="match_logic" type="radio" value="history"/>
+<div class="flex items-center gap-4 p-5 rounded-xl bg-surface-container transition-all peer-checked:bg-white peer-checked:ring-2 peer-checked:ring-primary-container">
+<div class="bg-surface-container-high p-3 rounded-lg group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="military_tech">military_tech</span>
+</div>
+<div class="flex-grow">
+<span class="font-headline font-bold text-on-surface">Winners and Losers</span>
+<p class="text-xs text-on-surface-variant">Matches previous match winners against other winners.</p>
+</div>
+</div>
+</label>
+<!-- Mixed Doubles -->
+<label class="block cursor-pointer group">
+<input class="peer sr-only" name="match_logic" type="radio" value="mixed"/>
+<div class="flex items-center gap-4 p-5 rounded-xl bg-surface-container transition-all peer-checked:bg-white peer-checked:ring-2 peer-checked:ring-primary-container">
+<div class="bg-surface-container-high p-3 rounded-lg group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="diversity_3">diversity_3</span>
+</div>
+<div class="flex-grow">
+<span class="font-headline font-bold text-on-surface">Mixed Doubles</span>
+<p class="text-xs text-on-surface-variant">Mandates one male and one female player per team.</p>
+</div>
+</div>
+</label>
+</div>
+</section>
+</div>
+<!-- Right Column: Visual Summary & Action -->
+<div class="lg:col-span-4 lg:sticky lg:top-24 h-fit">
+<div class="bg-surface-container-high rounded-[2rem] p-8 overflow-hidden relative">
+<!-- Background Kinetic Texture -->
+<div class="absolute -top-12 -right-12 w-48 h-48 bg-primary-container/20 rounded-full blur-3xl"></div>
+<div class="relative z-10">
+<h3 class="font-headline font-bold text-2xl mb-8 leading-tight">Session Summary</h3>
+<!-- Availability Heatmap Concept -->
+<div class="mb-10 p-6 bg-white rounded-2xl">
+<div class="flex items-center justify-between mb-4">
+<span class="text-on-surface-variant font-label text-xs uppercase tracking-widest">Active Players</span>
+<span class="font-headline font-black text-3xl text-primary tracking-tighter">18</span>
+</div>
+<div class="flex gap-1 h-3 mb-2">
+<div class="flex-grow bg-primary rounded-full"></div>
+<div class="flex-grow bg-primary rounded-full"></div>
+<div class="flex-grow bg-primary rounded-full"></div>
+<div class="flex-grow bg-primary rounded-full"></div>
+<div class="flex-grow bg-primary/20 rounded-full"></div>
+<div class="flex-grow bg-primary/10 rounded-full"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant uppercase font-medium">92% Capacity Reached</p>
+</div>
+<div class="space-y-4 mb-10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="event_seat">event_seat</span>
+<span class="text-sm font-medium">Court 1, 2, 3 Reserved</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="schedule">schedule</span>
+<span class="text-sm font-medium">Starts in 12:40m</span>
+</div>
+</div>
+<button class="w-full bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline font-black text-lg py-5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+              Generate Match
+              <span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+</button>
+<p class="text-center text-[10px] text-on-surface-variant mt-4 uppercase tracking-[0.15em] font-bold">Manual adjustment available next</p>
+</div>
+</div>
+<!-- Player Snapshot Card -->
+<div class="mt-6 p-6 bg-surface-container-lowest rounded-2xl flex items-center gap-4">
+<div class="flex -space-x-3">
+<img class="w-10 h-10 rounded-full ring-4 ring-white object-cover" data-alt="professional male athlete portrait outdoors athletic build smiling confident" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDS6bXNXGl9PnYTdREJI3aadqLA8rMj13nuZr-UW8VdmX7LQkCj50h-2GE1tz02OkuTePVvGwxXO9QKQkbNcvnF7r1hJyDdr14f0g3p4aOK1MBbhvqfu_1rGbfJ3D8mfes7qE77LNtCbs8NP2TQhDbDyT3TsyaT9vT05QcT3j9hhyrqHgOxzEgQfYWgnikqFogFORD4TzEUKKE45CB03s2zP7ZIu2w2X6zMTH7QTzhKnZvitG9miEVftJZrRgim8elLJDI0uf2H1dY"/>
+<img class="w-10 h-10 rounded-full ring-4 ring-white object-cover" data-alt="energetic young woman athlete portrait in sportswear sunlight background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTK4QsS3fyN5f_Gnr9fBmIuyySetI0pkg0agScavPWvoGSMLAgRmKxIdGc-_VdZSz-FxAkyo2zwekwaK1hDisVs5bQhk3N-lBCvrVsumqnlhyKCRj_-jaCK5o7hLzND9jyd9QZkV5nQ2PwbEjJwhF5hB6pcJNTHoSMwyLjRhIR8xIPXz7IGtZB7eLB5wYo7O4NfsJMZGzGLfYg25qZMXVYoSSKhp6DJGaphl0AMtawnj2LEUOoySGv4xyKNmDmd2-66o-08ws_Qhw"/>
+<img class="w-10 h-10 rounded-full ring-4 ring-white object-cover" data-alt="smiling man in tennis polo shirt short haircut natural daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDL5FUzAHzWKtodVAs13pIUHytgbUir-RmJMGdnar5nZcRwkG1e0RV-y1y9atzD5OxyqyVrLsbrWG6OrtCJH1rMF2cgmpVY0b8gIYhK0r7Dqdk16UjScwZD0rVJZ-TGSagzbD17zmbElF60MtWF9bbZlL98Jc_GvBr1QM1wXtTsGb2cARm8yKmYOFsZtn5pix1J56mSwrQ2B8n081asovravucVzNpQpdONh0q7XNGeQFZGC35FljFkd09hcoJU7INkE6anm1DGs5c"/>
+</div>
+<div>
+<p class="text-xs font-bold">Pro Level Queue</p>
+<p class="text-[10px] text-on-surface-variant">4 Top seeds checked in</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Shared Component: BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-white/80 dark:bg-[#242f41]/80 backdrop-blur-2xl shadow-[0_-4px_20px_rgba(83,91,113,0.06)] rounded-t-[2rem]">
+<div class="flex justify-around items-center px-4 pb-6 pt-3">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-[#535b71] dark:text-[#d5e3ff] px-5 py-2 hover:text-[#4e6300] dark:hover:text-[#cafd00] transition-all" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Home</span>
+</a>
+<!-- Players -->
+<a class="flex flex-col items-center justify-center text-[#535b71] dark:text-[#d5e3ff] px-5 py-2 hover:text-[#4e6300] dark:hover:text-[#cafd00] transition-all" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="groups">groups</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Players</span>
+</a>
+<!-- Match (ACTIVE) -->
+<a class="flex flex-col items-center justify-center bg-[#cafd00] dark:bg-[#4e6300] text-[#242f41] dark:text-white rounded-2xl px-5 py-2 scale-105 transition-all duration-200 translate-y-[-2px]" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="sports_tennis" style="font-variation-settings: 'FILL' 1;">sports_tennis</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Match</span>
+</a>
+<!-- Standings -->
+<a class="flex flex-col items-center justify-center text-[#535b71] dark:text-[#d5e3ff] px-5 py-2 hover:text-[#4e6300] dark:hover:text-[#cafd00] transition-all" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="leaderboard">leaderboard</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest">Standings</span>
+</a>
+</div>
+</nav>
+</body></html>

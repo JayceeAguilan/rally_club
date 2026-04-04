@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add New Player - Athletic Editorial</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&amp;family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-container": "#4a5e00",
+                        "on-primary": "#e1ff88",
+                        "secondary-fixed": "#dae2fd",
+                        "on-tertiary-fixed": "#453900",
+                        "surface-dim": "#c3d5f8",
+                        "on-tertiary-container": "#5a4c00",
+                        "tertiary": "#6b5b00",
+                        "secondary": "#535b71",
+                        "primary-fixed-dim": "#beee00",
+                        "tertiary-container": "#f9d940",
+                        "outline": "#6c778c",
+                        "inverse-on-surface": "#929db4",
+                        "on-primary-fixed-variant": "#526900",
+                        "on-secondary-fixed": "#373f54",
+                        "error": "#b02500",
+                        "on-background": "#242f41",
+                        "background": "#f4f6ff",
+                        "secondary-container": "#dae2fd",
+                        "surface-tint": "#4e6300",
+                        "primary-dim": "#435600",
+                        "on-secondary-fixed-variant": "#535b71",
+                        "error-dim": "#b92902",
+                        "secondary-fixed-dim": "#ccd4ee",
+                        "tertiary-fixed-dim": "#eacb32",
+                        "on-surface": "#242f41",
+                        "surface-container": "#dee8ff",
+                        "surface-container-high": "#d5e3ff",
+                        "on-error": "#ffefec",
+                        "primary": "#4e6300",
+                        "error-container": "#f95630",
+                        "on-surface-variant": "#515c70",
+                        "inverse-primary": "#cafd00",
+                        "tertiary-dim": "#5e4f00",
+                        "surface-variant": "#cdddfe",
+                        "surface-container-highest": "#cdddfe",
+                        "on-secondary": "#f0f2ff",
+                        "on-primary-fixed": "#3a4a00",
+                        "on-tertiary-fixed-variant": "#655500",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f4f6ff",
+                        "tertiary-fixed": "#f9d940",
+                        "surface-container-low": "#ecf1ff",
+                        "primary-container": "#cafd00",
+                        "on-error-container": "#520c00",
+                        "inverse-surface": "#040e1f",
+                        "surface-bright": "#f4f6ff",
+                        "on-secondary-container": "#4a5167",
+                        "on-tertiary": "#fff2ca",
+                        "primary-fixed": "#cafd00",
+                        "outline-variant": "#a2adc4",
+                        "secondary-dim": "#484f65"
+                    },
+                    fontFamily: {
+                        "headline": ["Lexend"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-background antialiased overflow-hidden">
+<!-- Background Content (Player Management Screen) -->
+<div class="fixed inset-0 z-0 overflow-y-auto px-6 pt-24 pb-12">
+<header class="mb-12">
+<h1 class="font-headline text-5xl font-black italic tracking-tighter text-primary uppercase">Roster</h1>
+<p class="text-on-surface-variant font-medium mt-2">Manage club athletes and seasonal seedings.</p>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Mock Player Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-primary">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline font-bold text-xl">Marcus Miller</h3>
+<span class="text-xs font-label uppercase tracking-widest text-on-surface-variant">Intermediate • Active</span>
+</div>
+<span class="material-symbols-outlined text-primary">verified</span>
+</div>
+</div>
+<!-- Mock Player Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-primary">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline font-bold text-xl">Sarah Jenkins</h3>
+<span class="text-xs font-label uppercase tracking-widest text-on-surface-variant">Pro • Active</span>
+</div>
+<span class="material-symbols-outlined text-primary">star</span>
+</div>
+</div>
+<!-- Mock Player Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border-l-4 border-outline-variant">
+<div class="flex justify-between items-start opacity-50">
+<div>
+<h3 class="font-headline font-bold text-xl">Elena Rodriguez</h3>
+<span class="text-xs font-label uppercase tracking-widest text-on-surface-variant">Beginner • Away</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant">schedule</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-md flex items-end md:items-center justify-center">
+<!-- Modal Surface -->
+<div class="w-full max-w-2xl bg-surface-container-lowest md:rounded-[2rem] rounded-t-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[839px] relative border-t-4 border-primary-container">
+<!-- Close Button (Top Right) -->
+<button class="absolute top-6 right-6 p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">close</span>
+</button>
+<!-- Header Section -->
+<div class="px-8 pt-10 pb-6">
+<p class="text-primary font-headline font-black text-xs uppercase tracking-widest mb-1">New Entry</p>
+<h2 class="font-headline text-4xl font-black italic tracking-tighter text-on-background">Add New Player</h2>
+</div>
+<!-- Form Content -->
+<div class="px-8 pb-8 space-y-8 overflow-y-auto custom-scrollbar">
+<!-- Full Name -->
+<div class="space-y-2 group">
+<label class="block text-[10px] font-label font-bold uppercase tracking-[0.2em] text-on-surface-variant group-focus-within:text-primary transition-colors">
+                        Full Name
+                    </label>
+<input class="w-full bg-surface-container-low border-none rounded-xl px-4 py-4 font-headline font-bold text-lg focus:ring-2 focus:ring-primary-container placeholder:text-outline-variant/50 transition-all" placeholder="e.g. Jordan Rivers" type="text"/>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Gender Segmented -->
+<div class="space-y-3">
+<label class="block text-[10px] font-label font-bold uppercase tracking-[0.2em] text-on-surface-variant">
+                            Gender <span class="text-error">*</span>
+</label>
+<div class="flex bg-surface-container-low p-1.5 rounded-2xl">
+<button class="flex-1 py-2 text-xs font-label font-black uppercase tracking-tighter rounded-xl bg-primary-container text-on-primary-container shadow-sm">Male</button>
+<button class="flex-1 py-2 text-xs font-label font-bold uppercase tracking-tighter text-on-surface-variant hover:text-on-surface transition-colors">Female</button>
+<button class="flex-1 py-2 text-xs font-label font-bold uppercase tracking-tighter text-on-surface-variant hover:text-on-surface transition-colors">Other</button>
+</div>
+</div>
+<!-- Skill Level Segmented -->
+<div class="space-y-3">
+<label class="block text-[10px] font-label font-bold uppercase tracking-[0.2em] text-on-surface-variant">
+                            Skill Level
+                        </label>
+<div class="flex flex-wrap bg-surface-container-low p-1.5 rounded-2xl gap-1">
+<button class="px-3 py-2 text-[10px] font-label font-bold uppercase tracking-tighter text-on-surface-variant hover:text-on-surface transition-colors border-2 border-transparent">Beg</button>
+<button class="px-3 py-2 text-[10px] font-label font-black uppercase tracking-tighter bg-surface-container-lowest text-primary rounded-lg shadow-sm border-2 border-primary-container">Int</button>
+<button class="px-3 py-2 text-[10px] font-label font-bold uppercase tracking-tighter text-on-surface-variant hover:text-on-surface transition-colors">Adv</button>
+<button class="px-3 py-2 text-[10px] font-label font-bold uppercase tracking-tighter text-on-surface-variant hover:text-on-surface transition-colors">Pro</button>
+</div>
+</div>
+</div>
+<!-- Availability Toggle -->
+<div class="flex items-center justify-between p-6 bg-surface-container-high rounded-[1.5rem] border-2 border-primary-container/20">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary font-bold">bolt</span>
+</div>
+<div>
+<p class="font-headline font-bold text-on-surface">Immediate Availability</p>
+<p class="text-[10px] font-label text-on-surface-variant uppercase tracking-widest">Active for court matchmaking</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-14 h-8 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Optional Notes -->
+<div class="space-y-2">
+<label class="block text-[10px] font-label font-bold uppercase tracking-[0.2em] text-on-surface-variant">
+                        Optional Athlete Notes
+                    </label>
+<textarea class="w-full bg-surface-container-low border-none rounded-xl px-4 py-4 font-body text-sm focus:ring-2 focus:ring-primary-container placeholder:text-outline-variant/50 transition-all resize-none" placeholder="Add specific details, medical needs, or preferred playing times..." rows="3"></textarea>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-8 bg-surface-container-low flex flex-col sm:flex-row gap-4">
+<button class="flex-1 py-4 px-6 rounded-xl font-headline font-bold text-sm uppercase tracking-widest text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95">
+                    Cancel
+                </button>
+<button class="flex-[2] py-4 px-6 bg-primary-container rounded-xl font-headline font-black text-sm uppercase tracking-widest text-on-primary-container shadow-[0_8px_24px_rgba(202,253,0,0.3)] hover:shadow-[0_12px_32px_rgba(202,253,0,0.4)] hover:-translate-y-0.5 transition-all active:scale-95 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person_add</span>
+                    Save Player
+                </button>
+</div>
+</div>
+</div>
+<!-- Persistent Branding/Nav (Contextual) -->
+<nav class="fixed top-0 left-0 w-full z-10 px-6 py-4 flex justify-between items-center bg-white/70 backdrop-blur-xl">
+<div class="font-headline font-black italic tracking-tighter text-2xl text-primary">Athletic Editorial</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border-2 border-primary-container">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="vibrant illustrated avatar of a tennis coach wearing a visor and athletic gear" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJWns3E7LR1-bL2grcpXfqXSxys2u6-mWlqv9YJkQMTmG_Kx6DdmymscowrCFC4NHM-6CeGLg2M99Woji7xwAWfQe0h46GBi7l__Xcd8ViSsWYpaHArze2bEJlYeb_wTO6q_x5ePnWuSan6V98HXMM56gIO3PSJnrxb4ECQAmhDYiGz6JEC9iTPrQJXFzSOuI_ElrMIsk5SlDJMOp0dOVCBfA7Oo18SR43JV12hfMSXIn7rxVNMIEazOLt20iecoo8RLvRYbjKB30"/>
+</div>
+</nav>
+<!-- Navigation Shell (Suppressed due to focused task logic, but placeholders for layout reference) -->
+<div class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 backdrop-blur-2xl rounded-t-[2rem] shadow-[0_-8px_30px_rgb(0,0,0,0.04)] pointer-events-none opacity-20">
+<div class="flex flex-col items-center justify-center px-4 py-2 text-slate-400">
+<span class="material-symbols-outlined">home</span>
+<span class="font-inter text-[10px] uppercase tracking-widest font-bold">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-2xl px-6 py-2 shadow-inner">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-inter text-[10px] uppercase tracking-widest font-bold">Roster</span>
+</div>
+<div class="flex flex-col items-center justify-center px-4 py-2 text-slate-400">
+<span class="material-symbols-outlined">sports_tennis</span>
+<span class="font-inter text-[10px] uppercase tracking-widest font-bold">Courts</span>
+</div>
+<div class="flex flex-col items-center justify-center px-4 py-2 text-slate-400">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-inter text-[10px] uppercase tracking-widest font-bold">Scores</span>
+</div>
+<div class="flex flex-col items-center justify-center px-4 py-2 text-slate-400">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-inter text-[10px] uppercase tracking-widest font-bold">Settings</span>
+</div>
+</div>
+</body></html>

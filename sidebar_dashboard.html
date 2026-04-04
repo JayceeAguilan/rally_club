@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Kinetic Court | Elite Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700;900&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-tint": "#4e6300",
+              "primary-fixed": "#cafd00",
+              "inverse-primary": "#cafd00",
+              "surface-container": "#dee8ff",
+              "on-error": "#ffefec",
+              "on-primary-fixed-variant": "#526900",
+              "surface": "#f4f6ff",
+              "surface-bright": "#f4f6ff",
+              "primary-container": "#cafd00",
+              "on-primary-container": "#4a5e00",
+              "surface-container-high": "#d5e3ff",
+              "on-surface-variant": "#515c70",
+              "error-dim": "#b92902",
+              "primary": "#4e6300",
+              "on-secondary-fixed": "#373f54",
+              "tertiary": "#6b5b00",
+              "outline-variant": "#a2adc4",
+              "tertiary-container": "#f9d940",
+              "surface-container-low": "#ecf1ff",
+              "inverse-surface": "#040e1f",
+              "secondary-dim": "#484f65",
+              "error": "#b02500",
+              "on-background": "#242f41",
+              "surface-variant": "#cdddfe",
+              "primary-dim": "#435600",
+              "on-secondary-fixed-variant": "#535b71",
+              "on-surface": "#242f41",
+              "on-tertiary-fixed": "#453900",
+              "secondary-container": "#dae2fd",
+              "error-container": "#f95630",
+              "on-primary": "#e1ff88",
+              "on-error-container": "#520c00",
+              "outline": "#6c778c",
+              "tertiary-dim": "#5e4f00",
+              "secondary": "#535b71",
+              "on-tertiary-fixed-variant": "#655500",
+              "tertiary-fixed": "#f9d940",
+              "on-secondary-container": "#4a5167",
+              "secondary-fixed": "#dae2fd",
+              "on-tertiary-container": "#5a4c00",
+              "on-primary-fixed": "#3a4a00",
+              "background": "#f4f6ff",
+              "secondary-fixed-dim": "#ccd4ee",
+              "on-secondary": "#f0f2ff",
+              "primary-fixed-dim": "#beee00",
+              "tertiary-fixed-dim": "#eacb32",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-highest": "#cdddfe",
+              "inverse-on-surface": "#929db4",
+              "surface-dim": "#c3d5f8",
+              "on-tertiary": "#fff2ca"
+            },
+            fontFamily: {
+              "headline": ["Lexend"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-lexend { font-family: 'Lexend', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .tonal-shift-no-borders { border: none !important; }
+        .scale-98-active-click:active { transform: scale(0.98); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cdddfe; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- SideNavBar -->
+<aside class="h-full w-64 fixed left-0 top-0 bg-[#d5e3ff] dark:bg-slate-900 tonal-shift-no-borders flex flex-col h-screen py-8 px-4 z-50">
+<div class="mb-10 px-4">
+<div class="flex items-center gap-3 mb-1">
+<span class="text-2xl font-black text-[#4e6300] dark:text-[#cafd00] italic">The Kinetic Court</span>
+</div>
+<p class="font-lexend text-xs font-semibold uppercase tracking-widest text-on-surface-variant opacity-70">Elite Management</p>
+</div>
+<nav class="flex-grow space-y-2">
+<button class="w-full flex items-center gap-4 py-3 text-[#4e6300] dark:text-[#cafd00] font-black border-l-4 border-[#cafd00] pl-4 transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-lexend font-bold tracking-tight">Dashboard</span>
+</button>
+<button class="w-full flex items-center gap-4 py-3 text-slate-500 dark:text-slate-400 font-medium pl-5 hover:bg-[#d5e3ff] dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg scale-98-active-click">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-lexend">Players</span>
+</button>
+<button class="w-full flex items-center gap-4 py-3 text-slate-500 dark:text-slate-400 font-medium pl-5 hover:bg-[#d5e3ff] dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg scale-98-active-click">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-lexend">Standings</span>
+</button>
+<button class="w-full flex items-center gap-4 py-3 text-slate-500 dark:text-slate-400 font-medium pl-5 hover:bg-[#d5e3ff] dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg scale-98-active-click">
+<span class="material-symbols-outlined" data-icon="sports_tennis">sports_tennis</span>
+<span class="font-lexend">Courts</span>
+</button>
+</nav>
+<div class="mt-auto pt-8 border-t border-white/10 space-y-2">
+<button class="w-full mb-6 bg-primary-container text-on-primary-container font-black py-4 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 scale-98-active-click">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+                New Match
+            </button>
+<button class="w-full flex items-center gap-4 py-3 text-slate-500 font-medium pl-5 hover:bg-[#d5e3ff] transition-colors rounded-lg">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-lexend">Settings</span>
+</button>
+<button class="w-full flex items-center gap-4 py-3 text-slate-500 font-medium pl-5 hover:bg-[#d5e3ff] transition-colors rounded-lg">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-lexend">Support</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] bg-white/70 dark:bg-slate-950/70 backdrop-blur-md flex justify-between items-center px-8 h-16 z-40">
+<div class="flex items-center gap-2">
+<span class="font-lexend text-sm font-semibold uppercase tracking-widest text-[#4e6300]">Athletic Editorial</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant/50 text-sm">search</span>
+<input class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-1.5 text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="Search courts or players..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="hover:opacity-80 transition-opacity"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="hover:opacity-80 transition-opacity"><span class="material-symbols-outlined" data-icon="account_circle">account_circle</span></button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="Admin Avatar" class="w-full h-full object-cover" data-alt="professional portrait of a high-end athletic club manager in modern office setting with soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4dmS7H5keqMD9Ea7Mi1Yy_2a_9qkmKIG2Vnr3Yh4rxKDCMRgCtmOFFb6FK4iMgV1wOmjLuaXEGbOCK-W3ORGY6ulpH_AKOWKVTKenzI0Wx5ZHQvc7sCfEAUYWvM_RFfjiidhnMbCNo7V2DKSg7dsov8C9ytPDxGsumOGAa8J8gA8iFKT0fStWqVPeClybVKWnBheE3hVMEY1V24bsRDKUObtvvLnjpoEKH1vKv2hWXvHaKOxrQ4oqaeH12c9LGPP5pKT3XtZ2B3s"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="pt-24 px-10 pb-12 space-y-10">
+<!-- Hero Title / Editorial Section -->
+<section class="flex flex-col md:flex-row justify-between items-end gap-6">
+<div class="max-w-2xl">
+<span class="text-primary font-lexend font-bold text-sm tracking-widest uppercase mb-2 block">Court Intelligence</span>
+<h1 class="text-6xl font-lexend font-black text-on-background tracking-tighter leading-none mb-4">The Kinetic <br/>Morning Routine.</h1>
+<p class="text-on-surface-variant text-lg font-medium leading-relaxed opacity-80">All 12 courts are currently active. Pro-league standings have been updated with last night's results.</p>
+</div>
+<div class="flex gap-4">
+<div class="bg-surface-container-lowest p-6 rounded-2xl flex flex-col items-end">
+<span class="text-4xl font-lexend font-black text-primary leading-none">98%</span>
+<span class="text-[0.6875rem] font-bold uppercase tracking-widest text-on-surface-variant">Capacity</span>
+</div>
+<div class="bg-primary p-6 rounded-2xl flex flex-col items-end text-white">
+<span class="text-4xl font-lexend font-black text-primary-fixed leading-none">04</span>
+<span class="text-[0.6875rem] font-bold uppercase tracking-widest opacity-80">Pending Scores</span>
+</div>
+</div>
+</section>
+<!-- Bento Grid Main Dashboard -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Match Center (Featured Card) -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<div class="flex justify-between items-center px-2">
+<h2 class="text-2xl font-lexend font-bold text-on-background">Match Center</h2>
+<button class="text-primary font-bold text-sm hover:underline">View All Matches</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Upcoming Match Card -->
+<div class="bg-surface-container-lowest p-8 rounded-3xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4">
+<span class="bg-primary-container text-on-primary-container text-[10px] font-black px-2 py-1 rounded">LIVE</span>
+</div>
+<div class="mb-6">
+<span class="font-lexend text-xs font-bold uppercase tracking-widest text-on-surface-variant/60 block mb-1">Court 01 • Championship</span>
+<h3 class="text-xl font-lexend font-black text-on-background italic">Vance vs. Sterling</h3>
+</div>
+<div class="flex items-center gap-4 mb-8">
+<div class="flex -space-x-3">
+<img alt="Player 1" class="w-12 h-12 rounded-full border-4 border-surface-container-lowest object-cover" data-alt="close-up portrait of athletic man with focused expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSHlHSFTllI_ZV-LFkTQl9ptpSiWOgDrVXC4_grKMIZIMcw6VYv4Y-hR5K8KUb78CTJDMMp_umev_-UTgloRlfayI-hFGwRg0wfdOO33b6XlPVkLWNlJMuJ0kyBSoreOk90hDh1nYaeFpB1Z4maLxhb6qAUC9r7hdXD_OUd-oljAkaNBioTLapmbKAYeA2GSGtX1Fad8wToLJLYrnENMkwKD2N3gxBxYA_9nTMcIZe_P39VCCIpJ9oeHFAOr2-D6lOhZMppNynOnU"/>
+<img alt="Player 2" class="w-12 h-12 rounded-full border-4 border-surface-container-lowest object-cover" data-alt="close-up portrait of athletic woman with ponytail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCj-46kqcJJUiQ3oBah98HY9_xQAS_YXRnzRYH57ukFFfpuL48dNTkBJQVHWpDg4wAj-muRSMF5wm_GQh4J35ug_Vy55zJsZHeueJ1BUK-vryGyBllng8Qfy9scwHo0w94Yl831ZKp7przVus-M4T9Z6ahsbpWbH46ANfjMohF7OfNCcI_-cU9eY4hqrM2Bw64WZPWKaTf5NekN_d6YGt611QUGPY8rh4pi2f0ri8RYZTzQ5SAYLkj6aPs7nyRYqDqdBfKVsOBh9aQ"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-background">11 - 09 - (Active)</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Final Set in Progress</p>
+</div>
+</div>
+<button class="w-full py-3 bg-surface-container text-on-surface font-bold rounded-xl group-hover:bg-primary group-hover:text-white transition-all duration-300">Quick Update</button>
+</div>
+<!-- Secondary Match Card -->
+<div class="bg-surface-container-low p-8 rounded-3xl group">
+<div class="mb-6">
+<span class="font-lexend text-xs font-bold uppercase tracking-widest text-on-surface-variant/60 block mb-1">Court 04 • Open Play</span>
+<h3 class="text-xl font-lexend font-black text-on-background italic">The 'Dink' Duo</h3>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex justify-between items-center">
+<span class="text-sm font-medium text-on-surface-variant">Scheduled</span>
+<span class="text-sm font-bold text-on-background">10:30 AM</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm font-medium text-on-surface-variant">Format</span>
+<span class="text-sm font-bold text-on-background">Mixed Doubles</span>
+</div>
+</div>
+<button class="w-full py-3 bg-white text-on-surface font-bold rounded-xl hover:shadow-md transition-shadow">Check-in Team</button>
+</div>
+</div>
+<!-- Court Status Section -->
+<div class="bg-surface-container-high rounded-3xl p-8">
+<div class="flex justify-between items-center mb-8">
+<h2 class="text-2xl font-lexend font-bold text-on-background">Court Status</h2>
+<div class="flex gap-2">
+<span class="flex items-center gap-1.5 text-xs font-bold uppercase text-primary"><span class="w-2 h-2 rounded-full bg-primary"></span> Available</span>
+<span class="flex items-center gap-1.5 text-xs font-bold uppercase text-on-surface-variant/50 ml-4"><span class="w-2 h-2 rounded-full bg-on-surface-variant/50"></span> Occupied</span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-4">
+<!-- Court Heatmap Mimic -->
+<div class="bg-primary p-4 rounded-xl text-on-primary h-24 flex flex-col justify-between">
+<span class="font-black text-2xl opacity-40">01</span>
+<span class="font-lexend text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+<div class="bg-primary p-4 rounded-xl text-on-primary h-24 flex flex-col justify-between">
+<span class="font-black text-2xl opacity-40">02</span>
+<span class="font-lexend text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl text-on-background h-24 flex flex-col justify-between">
+<span class="font-black text-2xl text-on-surface-variant/20">03</span>
+<span class="font-lexend text-[10px] font-bold uppercase tracking-widest text-primary">Open</span>
+</div>
+<div class="bg-primary p-4 rounded-xl text-on-primary h-24 flex flex-col justify-between">
+<span class="font-black text-2xl opacity-40">04</span>
+<span class="font-lexend text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+<div class="bg-primary p-4 rounded-xl text-on-primary h-24 flex flex-col justify-between">
+<span class="font-black text-2xl opacity-40">05</span>
+<span class="font-lexend text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+<div class="bg-primary p-4 rounded-xl text-on-primary h-24 flex flex-col justify-between">
+<span class="font-black text-2xl opacity-40">06</span>
+<span class="font-lexend text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+<div class="bg-primary-container p-4 rounded-xl text-on-primary-container h-24 flex flex-col justify-between border-2 border-primary">
+<span class="font-black text-2xl opacity-40">07</span>
+<span class="font-lexend text-[10px] font-bold uppercase tracking-widest">Maint.</span>
+</div>
+<div class="bg-primary p-4 rounded-xl text-on-primary h-24 flex flex-col justify-between">
+<span class="font-black text-2xl opacity-40">08</span>
+<span class="font-lexend text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity Feed (Side Panel) -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<div class="px-2">
+<h2 class="text-2xl font-lexend font-bold text-on-background">Activity Feed</h2>
+</div>
+<div class="bg-surface-container-lowest rounded-3xl p-8 h-full">
+<div class="space-y-8">
+<!-- Activity Item -->
+<div class="flex gap-4 group">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+<div class="absolute top-10 left-5 w-0.5 h-12 bg-surface-container-high"></div>
+</div>
+<div class="pt-1">
+<p class="text-sm font-bold text-on-background">New League Entry</p>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Marcus Thorne registered for the Fall Open Invitational.</p>
+<span class="text-[10px] font-bold text-primary uppercase mt-2 block">2m ago</span>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="flex gap-4 group">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<div class="absolute top-10 left-5 w-0.5 h-12 bg-surface-container-high"></div>
+</div>
+<div class="pt-1">
+<p class="text-sm font-bold text-on-background">Payment Confirmed</p>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Elite Membership renewal processed for Court 08 group.</p>
+<span class="text-[10px] font-bold text-on-surface-variant opacity-60 uppercase mt-2 block">45m ago</span>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="flex gap-4 group">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">report</span>
+</div>
+<div class="absolute top-10 left-5 w-0.5 h-12 bg-surface-container-high"></div>
+</div>
+<div class="pt-1">
+<p class="text-sm font-bold text-on-background">Maintenance Alert</p>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Court 07 lighting system requires inspection.</p>
+<span class="text-[10px] font-bold text-on-surface-variant opacity-60 uppercase mt-2 block">2h ago</span>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="flex gap-4 group">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+<div class="pt-1">
+<p class="text-sm font-bold text-on-background">Match Result</p>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Team 'Pickle Masters' defeated 'The Dinkers' 21-18.</p>
+<span class="text-[10px] font-bold text-on-surface-variant opacity-60 uppercase mt-2 block">3h ago</span>
+</div>
+</div>
+</div>
+<button class="w-full mt-12 py-4 border-2 border-surface-container-high text-on-surface-variant font-bold rounded-2xl hover:bg-surface-container-low transition-colors">
+                            Load History
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Live Score Ticker -->
+<footer class="mt-auto bg-inverse-surface py-3 px-10 flex items-center gap-12 overflow-hidden">
+<span class="text-primary-fixed font-lexend font-black text-xs uppercase tracking-[0.2em] whitespace-nowrap">Live Updates</span>
+<div class="flex gap-16 animate-marquee whitespace-nowrap">
+<span class="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-fixed"></span> COURT 01: VANCE (11) - STERLING (09)
+                </span>
+<span class="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 opacity-60">
+<span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span> COURT 02: PENDING START
+                </span>
+<span class="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-fixed"></span> COURT 03: OPEN PLAY IN PROGRESS
+                </span>
+<span class="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-fixed"></span> COURT 05: ROSSI (21) - KHAN (15) FINAL
+                </span>
+</div>
+</footer>
+</main>
+</body></html>

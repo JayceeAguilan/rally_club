@@ -1,0 +1,46 @@
+{
+	"flutter": {
+		"platforms": {
+			"android": {
+				"default": {
+					"projectId": "rallyclubapp",
+					"appId": "1:842671450266:android:eeafb9b4245f4ec84b5723",
+					"fileOutput": "android/app/google-services.json"
+				}
+			},
+			"dart": {
+				"lib/firebase_options.dart": {
+					"projectId": "rallyclubapp",
+					"configurations": {
+						"android": "1:842671450266:android:eeafb9b4245f4ec84b5723",
+						"ios": "1:842671450266:ios:228b5f50721c69de4b5723",
+						"macos": "1:842671450266:ios:228b5f50721c69de4b5723",
+						"windows": "1:842671450266:web:5b1bc86d33ea871b4b5723",
+						"web": "1:842671450266:web:5b1bc86d33ea871b4b5723"
+					}
+				}
+			}
+		}
+	},
+	"firestore": {
+		"rules": "firestore.rules",
+		"indexes": "firestore.indexes.json"
+	},
+	"functions": {
+		"source": "functions"
+	},
+	"hosting": {
+		"public": "build/web",
+		"ignore": [
+			"firebase.json",
+			"**/.*",
+			"**/node_modules/**"
+		],
+		"rewrites": [
+			{
+				"source": "**",
+				"destination": "/index.html"
+			}
+		]
+	}
+}

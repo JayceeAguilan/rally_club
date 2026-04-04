@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kinetic Court | Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700;800;900&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-dim": "#484f65",
+                        "surface-dim": "#c3d5f8",
+                        "on-surface": "#242f41",
+                        "on-tertiary-fixed-variant": "#655500",
+                        "surface-tint": "#4e6300",
+                        "tertiary-container": "#f9d940",
+                        "tertiary-dim": "#5e4f00",
+                        "inverse-surface": "#040e1f",
+                        "error-dim": "#b92902",
+                        "surface-container": "#dee8ff",
+                        "on-tertiary": "#fff2ca",
+                        "tertiary-fixed-dim": "#eacb32",
+                        "on-surface-variant": "#515c70",
+                        "primary-container": "#cafd00",
+                        "surface-variant": "#cdddfe",
+                        "on-tertiary-fixed": "#453900",
+                        "error": "#b02500",
+                        "surface-bright": "#f4f6ff",
+                        "outline-variant": "#a2adc4",
+                        "secondary-container": "#dae2fd",
+                        "on-secondary-fixed": "#373f54",
+                        "surface": "#f4f6ff",
+                        "outline": "#6c778c",
+                        "surface-container-high": "#d5e3ff",
+                        "tertiary": "#6b5b00",
+                        "primary-fixed-dim": "#beee00",
+                        "primary-fixed": "#cafd00",
+                        "secondary-fixed": "#dae2fd",
+                        "on-primary": "#e1ff88",
+                        "primary": "#4e6300",
+                        "on-primary-fixed": "#3a4a00",
+                        "on-error": "#ffefec",
+                        "secondary": "#535b71",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#242f41",
+                        "surface-container-highest": "#cdddfe",
+                        "inverse-on-surface": "#929db4",
+                        "secondary-fixed-dim": "#ccd4ee",
+                        "inverse-primary": "#cafd00",
+                        "on-secondary-fixed-variant": "#535b71",
+                        "surface-container-low": "#ecf1ff",
+                        "on-primary-fixed-variant": "#526900",
+                        "primary-dim": "#435600",
+                        "on-primary-container": "#4a5e00",
+                        "on-error-container": "#520c00",
+                        "on-secondary-container": "#4a5167",
+                        "background": "#f4f6ff",
+                        "on-tertiary-container": "#5a4c00",
+                        "tertiary-fixed": "#f9d940",
+                        "error-container": "#f95630",
+                        "on-secondary": "#f0f2ff"
+                    },
+                    fontFamily: {
+                        "headline": ["Lexend"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Lexend', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#f4f6ff]/70 dark:bg-[#242f41]/70 backdrop-blur-xl">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="text-[#4e6300] dark:text-[#cafd00] hover:opacity-80 transition-opacity active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="text-xl font-black text-[#242f41] dark:text-white italic tracking-tighter">KINETIC COURT</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex bg-surface-container-low rounded-xl px-4 py-1.5 items-center gap-2">
+<span class="material-symbols-outlined text-outline text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 placeholder:text-outline-variant" placeholder="Search players..." type="text"/>
+</div>
+<button class="text-[#4e6300] dark:text-[#cafd00] hover:opacity-80 transition-opacity active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-screen-xl mx-auto">
+<!-- Hero Stats Bento Section -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+<div class="md:col-span-2 relative overflow-hidden bg-primary text-on-primary rounded-[2rem] p-8 flex flex-col justify-between min-h-[240px]">
+<div class="relative z-10">
+<p class="text-on-primary/80 font-medium tracking-widest uppercase text-xs mb-2">Club Status</p>
+<h2 class="text-4xl font-black leading-tight max-w-xs">THE COURT IS LIVE RIGHT NOW.</h2>
+</div>
+<div class="relative z-10 flex gap-8 items-end">
+<div>
+<span class="block text-5xl font-black tracking-tighter text-primary-container">24</span>
+<span class="text-xs uppercase tracking-widest font-bold opacity-70">Total Players</span>
+</div>
+<div>
+<span class="block text-5xl font-black tracking-tighter text-white">18</span>
+<span class="text-xs uppercase tracking-widest font-bold opacity-70">Available</span>
+</div>
+</div>
+<!-- Abstract Paddle Shape Overlay -->
+<div class="absolute -right-10 -bottom-10 w-64 h-64 bg-primary-container/20 rounded-full blur-3xl"></div>
+</div>
+<div class="bg-surface-container-high rounded-[2rem] p-8 flex flex-col justify-center">
+<span class="material-symbols-outlined text-primary text-4xl mb-4" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<h3 class="text-xl font-bold mb-2">Pro Standing</h3>
+<p class="text-on-surface-variant text-sm mb-6">You're currently ranked #4 in the local ladder. 2 matches to reach Tier 1.</p>
+<div class="w-full bg-surface-variant rounded-full h-2">
+<div class="bg-primary h-2 rounded-full w-[75%]"></div>
+</div>
+</div>
+</section>
+<!-- Quick Actions -->
+<section class="mb-12">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-6 ml-1">New Match</h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<button class="group flex items-center justify-between bg-surface-container-lowest p-6 rounded-2xl hover:bg-primary-container transition-all duration-300">
+<div class="flex items-center gap-5">
+<div class="bg-surface-container-low p-4 rounded-xl group-hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="person">person</span>
+</div>
+<div class="text-left">
+<span class="block font-black text-xl tracking-tight">Singles Match</span>
+<span class="text-xs text-on-surface-variant group-hover:text-on-primary-container">1 vs 1 Competitive</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-on-primary-container" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="group flex items-center justify-between bg-surface-container-lowest p-6 rounded-2xl hover:bg-primary-container transition-all duration-300">
+<div class="flex items-center gap-5">
+<div class="bg-surface-container-low p-4 rounded-xl group-hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="groups" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+<div class="text-left">
+<span class="block font-black text-xl tracking-tight">Doubles Match</span>
+<span class="text-xs text-on-surface-variant group-hover:text-on-primary-container">2 vs 2 Team Play</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-on-primary-container" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</section>
+<!-- Main Content Area: Activity & Shortcuts -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+<!-- Recent Activity -->
+<section class="lg:col-span-8">
+<div class="flex justify-between items-end mb-8">
+<h3 class="text-2xl font-black tracking-tight">RECENT ACTIVITY</h3>
+<a class="text-primary font-bold text-xs uppercase tracking-widest mb-1" href="#">View All</a>
+</div>
+<div class="space-y-4">
+<!-- Activity Item 1 -->
+<div class="bg-surface-container-low rounded-2xl p-6 flex flex-wrap items-center justify-between gap-6">
+<div class="flex items-center gap-4">
+<img alt="Player A" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a focused young male athlete with short dark hair in a sports jersey" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdT4azgeBf-Qz0v0K6wObqeafOP1y2xX6U1Lm5kZWwCDRTJET3ozBEYxoPAOl0V2USgzg8dZ8rPPHG-q2ArI0YIYJOx9K2X6hCDaJDGlScQTATDAnlkVC-ikSo4JTa-x9UdSVQQrhQRu8wdbQUdNykInrQftRmuEFiJl8HLIXk0vLpnTLRhRNnbeJHRlL2WXXILvu09hKSKj6ai2vYUoPYolT7gyxlqGOaG8_S4J0t9gce84Ps9-sVxui8KGevV718N0ttkCkGNx8"/>
+<div>
+<h4 class="font-bold text-on-surface">Alex Rivera</h4>
+<p class="text-xs text-on-surface-variant">vs Marcus Chen</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="text-center">
+<span class="block text-2xl font-black text-primary">11 - 7</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant tracking-tighter">Final Score</span>
+</div>
+<span class="px-3 py-1 bg-primary-container text-on-primary-container text-[10px] font-black uppercase rounded-full">Victory</span>
+</div>
+<div class="text-right">
+<p class="text-xs text-on-surface-variant font-medium">Court 02</p>
+<p class="text-[10px] text-outline">15m ago</p>
+</div>
+</div>
+<!-- Activity Item 2 -->
+<div class="bg-surface-container-low rounded-2xl p-6 flex flex-wrap items-center justify-between gap-6">
+<div class="flex items-center gap-4">
+<img alt="Player B" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a confident female pickleball player with pulled back hair outdoors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPklwhZXpPEYW2eRh1iEvLbB2YXAp8maqG2oJQ_nKhXpv77SR_JuNEORGEUfEdWP4s29OcvbHVrrlve93vI8_uAkHfjU49mm9BZzM4g_SP9Kom6CKY57I2luXh5i_Wp9A7gw7cg52_gBCPvMjZYU9S2y2UMgiMkbMa1S6qgeKzHhRiGyLK9FQjrxvLd8sRzubG0dRwGqUC55Sr1Qab8vpqYdE5h4zj5YioncjZEaEVex6qTgl9orWr84J2xsJnXUlUjnsgspgIBwc"/>
+<div>
+<h4 class="font-bold text-on-surface">Sarah Jenkins</h4>
+<p class="text-xs text-on-surface-variant">vs Elena Rodriguez</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="text-center">
+<span class="block text-2xl font-black text-on-surface">9 - 11</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant tracking-tighter">Final Score</span>
+</div>
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant text-[10px] font-black uppercase rounded-full">Loss</span>
+</div>
+<div class="text-right">
+<p class="text-xs text-on-surface-variant font-medium">Court 05</p>
+<p class="text-[10px] text-outline">42m ago</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Shortcuts -->
+<aside class="lg:col-span-4 space-y-6">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-6 ml-1">Club Navigation</h3>
+<a class="block bg-surface-container-highest rounded-2xl p-6 group hover:bg-primary transition-colors duration-300" href="#">
+<div class="flex justify-between items-start">
+<div>
+<span class="material-symbols-outlined text-primary group-hover:text-primary-container text-3xl mb-3" data-icon="leaderboard">leaderboard</span>
+<h4 class="text-xl font-bold group-hover:text-white">Standings</h4>
+<p class="text-sm text-on-surface-variant group-hover:text-primary-container/80">View global &amp; club rankings</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-white" data-icon="chevron_right">chevron_right</span>
+</div>
+</a>
+<a class="block bg-surface-container-highest rounded-2xl p-6 group hover:bg-primary transition-colors duration-300" href="#">
+<div class="flex justify-between items-start">
+<div>
+<span class="material-symbols-outlined text-primary group-hover:text-primary-container text-3xl mb-3" data-icon="history">history</span>
+<h4 class="text-xl font-bold group-hover:text-white">Match History</h4>
+<p class="text-sm text-on-surface-variant group-hover:text-primary-container/80">Your full performance record</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-white" data-icon="chevron_right">chevron_right</span>
+</div>
+</a>
+<!-- Promotion / Invite Card -->
+<div class="relative overflow-hidden bg-[#242f41] text-white rounded-2xl p-6">
+<p class="text-[10px] font-black uppercase tracking-widest text-[#cafd00] mb-2">Member Perk</p>
+<h4 class="text-lg font-bold mb-4">Invite a guest for free this weekend.</h4>
+<button class="w-full bg-[#cafd00] text-[#242f41] font-bold py-2 rounded-lg text-sm">Send Invite</button>
+<!-- Decorative Element -->
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-8xl" data-icon="sports_tennis">sports_tennis</span>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-white/80 dark:bg-[#242f41]/80 backdrop-blur-2xl rounded-t-[2rem] shadow-[0_-4px_20px_rgba(83,91,113,0.06)]">
+<div class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center bg-[#cafd00] dark:bg-[#4e6300] text-[#242f41] dark:text-white rounded-2xl px-5 py-2 scale-105 transition-all translate-y-[-2px] duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Home</span>
+</a>
+<!-- Players -->
+<a class="flex flex-col items-center justify-center text-[#535b71] dark:text-[#d5e3ff] px-5 py-2 hover:text-[#4e6300] dark:hover:text-[#cafd00]" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Players</span>
+</a>
+<!-- Match -->
+<a class="flex flex-col items-center justify-center text-[#535b71] dark:text-[#d5e3ff] px-5 py-2 hover:text-[#4e6300] dark:hover:text-[#cafd00]" href="#">
+<span class="material-symbols-outlined" data-icon="sports_tennis">sports_tennis</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Match</span>
+</a>
+<!-- Standings -->
+<a class="flex flex-col items-center justify-center text-[#535b71] dark:text-[#d5e3ff] px-5 py-2 hover:text-[#4e6300] dark:hover:text-[#cafd00]" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-['Inter'] font-medium text-[10px] uppercase tracking-widest mt-1">Standings</span>
+</a>
+</div>
+</nav>
+</body></html>
