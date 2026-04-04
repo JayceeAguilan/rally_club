@@ -557,7 +557,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                 padding: const EdgeInsets.only(bottom: 16),
                 child: _buildPlayerRow(
                   player.name,
-                  '${player.skillLevel.toUpperCase()} • ${player.gender.toUpperCase()}',
+                  '${player.displaySkillLabel.toUpperCase()} • ${player.gender.toUpperCase()}',
                   isWinner,
                   player.gender,
                 ),

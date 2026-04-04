@@ -6,7 +6,7 @@ class Player {
   final String? id;
   final String name;
   final String gender; // 'Male' or 'Female'
-  final String skillLevel; // 'Beg', 'Int', 'Adv', 'Pro'
+  final String skillLevel; // 'Beg', 'Int', 'Adv'
   final bool countsAsPlayer;
   final bool isAvailable;
   final String notes;
@@ -49,7 +49,7 @@ class Player {
       case 'adv':
         return 'Adv';
       case 'pro':
-        return 'Pro';
+        return 'Adv';
       default:
         return skillLevel.trim();
     }
@@ -63,8 +63,6 @@ class Player {
         return 'Intermediate';
       case 'Adv':
         return 'Advanced';
-      case 'Pro':
-        return 'Pro';
       default:
         return skillLevel.trim();
     }
@@ -105,7 +103,7 @@ class Player {
       id: map['id'],
       name: map['name'],
       gender: map['gender'],
-      skillLevel: map['skillLevel'],
+      skillLevel: normalizeSkillLevelCode(map['skillLevel'] ?? ''),
       countsAsPlayer: (map['countsAsPlayer'] ?? 1) == 1,
       isAvailable: map['isAvailable'] == 1,
       notes: map['notes'] ?? '',
@@ -133,7 +131,9 @@ class Player {
   }
 
   bool isOwnedByUser({String? linkedPlayerId, String? userUid}) {
-    if (linkedPlayerId != null && linkedPlayerId.isNotEmpty && id == linkedPlayerId) {
+    if (linkedPlayerId != null &&
+        linkedPlayerId.isNotEmpty &&
+        id == linkedPlayerId) {
       return true;
     }
 

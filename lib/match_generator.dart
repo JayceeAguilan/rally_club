@@ -4,7 +4,7 @@ import 'models/player.dart';
 class GeneratedMatch {
   final List<Player> teamA;
   final List<Player> teamB;
-  final String gameMode;   // 'singles' or 'doubles'
+  final String gameMode; // 'singles' or 'doubles'
   final String matchLogic; // 'auto', 'skill', 'history', 'mixed'
 
   GeneratedMatch({
@@ -30,11 +30,14 @@ class MatchGenerator {
   /// Skill weight mapping for balancing algorithms.
   static int _skillWeight(String skillLevel) {
     switch (Player.normalizeSkillLevelCode(skillLevel)) {
-      case 'Beg': return 1;
-      case 'Int': return 2;
-      case 'Adv': return 3;
-      case 'Pro': return 4;
-      default: return 2;
+      case 'Beg':
+        return 1;
+      case 'Int':
+        return 2;
+      case 'Adv':
+        return 3;
+      default:
+        return 2;
     }
   }
 
@@ -71,7 +74,11 @@ class MatchGenerator {
       case 'skill':
         return _skillSeparated(players, gameMode);
       case 'history':
-        return _winnersAndLosers(players, gameMode, playerStandings ?? <String, Map<String, int>>{});
+        return _winnersAndLosers(
+          players,
+          gameMode,
+          playerStandings ?? <String, Map<String, int>>{},
+        );
       case 'mixed':
         return _mixedDoubles(players);
       default:
@@ -80,7 +87,10 @@ class MatchGenerator {
   }
 
   /// AUTO-BALANCED: Randomly select players, then balance teams by skill weight.
-  static MatchGenerationResult _autoBalanced(List<Player> players, String gameMode) {
+  static MatchGenerationResult _autoBalanced(
+    List<Player> players,
+    String gameMode,
+  ) {
     final int requiredCount = gameMode == 'singles' ? 2 : 4;
 
     // Shuffle the entire pool for true randomness
@@ -90,34 +100,46 @@ class MatchGenerator {
     final selected = players.take(requiredCount).toList();
 
     // Sort the selected players by skill for balanced team assignment
-    selected.sort((a, b) => _skillWeight(b.skillLevel).compareTo(_skillWeight(a.skillLevel)));
+    selected.sort(
+      (a, b) =>
+          _skillWeight(b.skillLevel).compareTo(_skillWeight(a.skillLevel)),
+    );
 
     if (gameMode == 'singles') {
-      return MatchGenerationResult.success(GeneratedMatch(
-        teamA: [selected[0]],
-        teamB: [selected[1]],
-        gameMode: gameMode,
-        matchLogic: 'auto',
-      ));
+      return MatchGenerationResult.success(
+        GeneratedMatch(
+          teamA: [selected[0]],
+          teamB: [selected[1]],
+          gameMode: gameMode,
+          matchLogic: 'auto',
+        ),
+      );
     } else {
       // Doubles: Snake draft — strongest + weakest vs 2nd + 3rd
-      return MatchGenerationResult.success(GeneratedMatch(
-        teamA: [selected[0], selected[3]], // Strongest + weakest
-        teamB: [selected[1], selected[2]], // 2nd + 3rd
-        gameMode: gameMode,
-        matchLogic: 'auto',
-      ));
+      return MatchGenerationResult.success(
+        GeneratedMatch(
+          teamA: [selected[0], selected[3]], // Strongest + weakest
+          teamB: [selected[1], selected[2]], // 2nd + 3rd
+          gameMode: gameMode,
+          matchLogic: 'auto',
+        ),
+      );
     }
   }
 
   /// SKILL-SEPARATED: Only players of the same skill level play together.
-  static MatchGenerationResult _skillSeparated(List<Player> players, String gameMode) {
+  static MatchGenerationResult _skillSeparated(
+    List<Player> players,
+    String gameMode,
+  ) {
     final int requiredCount = gameMode == 'singles' ? 2 : 4;
 
     // Group players by skill level
     final Map<String, List<Player>> groups = {};
     for (final p in players) {
-      groups.putIfAbsent(Player.normalizeSkillLevelCode(p.skillLevel), () => []).add(p);
+      groups
+          .putIfAbsent(Player.normalizeSkillLevelCode(p.skillLevel), () => [])
+          .add(p);
     }
 
     // Find the first group with enough players
@@ -139,19 +161,23 @@ class MatchGenerator {
     pool.shuffle();
 
     if (gameMode == 'singles') {
-      return MatchGenerationResult.success(GeneratedMatch(
-        teamA: [pool[0]],
-        teamB: [pool[1]],
-        gameMode: gameMode,
-        matchLogic: 'skill',
-      ));
+      return MatchGenerationResult.success(
+        GeneratedMatch(
+          teamA: [pool[0]],
+          teamB: [pool[1]],
+          gameMode: gameMode,
+          matchLogic: 'skill',
+        ),
+      );
     } else {
-      return MatchGenerationResult.success(GeneratedMatch(
-        teamA: [pool[0], pool[1]],
-        teamB: [pool[2], pool[3]],
-        gameMode: gameMode,
-        matchLogic: 'skill',
-      ));
+      return MatchGenerationResult.success(
+        GeneratedMatch(
+          teamA: [pool[0], pool[1]],
+          teamB: [pool[2], pool[3]],
+          gameMode: gameMode,
+          matchLogic: 'skill',
+        ),
+      );
     }
   }
 
@@ -179,20 +205,24 @@ class MatchGenerator {
 
     if (gameMode == 'singles') {
       // Top 2 winners play each other
-      return MatchGenerationResult.success(GeneratedMatch(
-        teamA: [players[0]],
-        teamB: [players[1]],
-        gameMode: gameMode,
-        matchLogic: 'history',
-      ));
+      return MatchGenerationResult.success(
+        GeneratedMatch(
+          teamA: [players[0]],
+          teamB: [players[1]],
+          gameMode: gameMode,
+          matchLogic: 'history',
+        ),
+      );
     } else {
       // Top 2 winners team up, bottom 2 team up
-      return MatchGenerationResult.success(GeneratedMatch(
-        teamA: [players[0], players[1]],     // Winners team
-        teamB: [players[2], players[3]],     // Losers team
-        gameMode: gameMode,
-        matchLogic: 'history',
-      ));
+      return MatchGenerationResult.success(
+        GeneratedMatch(
+          teamA: [players[0], players[1]], // Winners team
+          teamB: [players[2], players[3]], // Losers team
+          gameMode: gameMode,
+          matchLogic: 'history',
+        ),
+      );
     }
   }
 
@@ -234,19 +264,23 @@ class MatchGenerator {
 
     if (diff2 < diff1) {
       // Option 2 is more balanced
-      return MatchGenerationResult.success(GeneratedMatch(
-        teamA: [m1, f2],
-        teamB: [m2, f1],
-        gameMode: 'doubles',
-        matchLogic: 'mixed',
-      ));
+      return MatchGenerationResult.success(
+        GeneratedMatch(
+          teamA: [m1, f2],
+          teamB: [m2, f1],
+          gameMode: 'doubles',
+          matchLogic: 'mixed',
+        ),
+      );
     }
 
-    return MatchGenerationResult.success(GeneratedMatch(
-      teamA: [m1, f1],
-      teamB: [m2, f2],
-      gameMode: 'doubles',
-      matchLogic: 'mixed',
-    ));
+    return MatchGenerationResult.success(
+      GeneratedMatch(
+        teamA: [m1, f1],
+        teamB: [m2, f2],
+        gameMode: 'doubles',
+        matchLogic: 'mixed',
+      ),
+    );
   }
 }

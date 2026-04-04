@@ -32,7 +32,7 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   String _selectedGender = 'Male';
-  String _selectedSkill = 'Int';
+  String _selectedSkill = 'Intermediate';
   bool _isAvailable = true;
   String? _profileImageBase64;
 
@@ -86,7 +86,9 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _buildSaveErrorMessage(Object error) {
@@ -113,7 +115,7 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
       _nameController.text = widget.playerToEdit!.name;
       _notesController.text = widget.playerToEdit!.notes;
       _selectedGender = widget.playerToEdit!.gender;
-      _selectedSkill = Player.normalizeSkillLevelCode(
+      _selectedSkill = Player.displaySkillLevel(
         widget.playerToEdit!.skillLevel,
       );
       _isAvailable = widget.playerToEdit!.isAvailable;
@@ -336,10 +338,9 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
                               ),
                               child: Row(
                                 children: [
-                                  _buildSegmentButton('SKILL', 'Beg'),
-                                  _buildSegmentButton('SKILL', 'Int'),
-                                  _buildSegmentButton('SKILL', 'Adv'),
-                                  _buildSegmentButton('SKILL', 'Pro'),
+                                  _buildSegmentButton('SKILL', 'Beginner'),
+                                  _buildSegmentButton('SKILL', 'Intermediate'),
+                                  _buildSegmentButton('SKILL', 'Advanced'),
                                 ],
                               ),
                             ),
@@ -622,7 +623,7 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
           child: Text(
             title.toUpperCase(),
             style: TextStyle(
-              fontSize: 10,
+              fontSize: group == 'SKILL' ? 9 : 10,
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
               color: isSelected
                   ? AppColors.primary(context)

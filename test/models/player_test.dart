@@ -90,7 +90,7 @@ void main() {
         final p = Player(
           name: 'Dave',
           gender: 'Male',
-          skillLevel: 'Pro',
+          skillLevel: 'Advanced',
           isAvailable: false,
         );
 
@@ -146,18 +146,15 @@ void main() {
 
         final map = p.toProfileUpdateMap();
 
-        expect(
-          map.keys.toSet(),
-          {
-            'name',
-            'gender',
-            'skillLevel',
-            'isAvailable',
-            'notes',
-            'profileImageBase64',
-            'updatedAt',
-          },
-        );
+        expect(map.keys.toSet(), {
+          'name',
+          'gender',
+          'skillLevel',
+          'isAvailable',
+          'notes',
+          'profileImageBase64',
+          'updatedAt',
+        });
         expect(map['name'], 'Gina');
         expect(map['isAvailable'], 1);
         expect(map.containsKey('clubId'), isFalse);
@@ -172,7 +169,7 @@ void main() {
           id: 'p2',
           name: 'Frank',
           gender: 'Male',
-          skillLevel: 'Pro',
+          skillLevel: 'Advanced',
           isAvailable: false,
           notes: 'Prefers morning sessions',
           lastResult: 'loss',
@@ -188,7 +185,7 @@ void main() {
         expect(restored.id, original.id);
         expect(restored.name, original.name);
         expect(restored.gender, original.gender);
-        expect(restored.skillLevel, original.skillLevel);
+        expect(restored.skillLevel, 'Adv');
         expect(restored.isAvailable, original.isAvailable);
         expect(restored.notes, original.notes);
         expect(restored.lastResult, original.lastResult);
@@ -203,10 +200,10 @@ void main() {
     group('copyWith', () {
       test('overrides only specified fields', () {
         final p = Player.fromMap(fullMap);
-        final copy = p.copyWith(name: 'Alicia', skillLevel: 'Pro');
+        final copy = p.copyWith(name: 'Alicia', skillLevel: 'Advanced');
 
         expect(copy.name, 'Alicia');
-        expect(copy.skillLevel, 'Pro');
+        expect(copy.skillLevel, 'Advanced');
         expect(copy.id, p.id);
         expect(copy.gender, p.gender);
         expect(copy.isAvailable, p.isAvailable);
@@ -215,7 +212,11 @@ void main() {
 
       test('can toggle boolean fields', () {
         final p = Player.fromMap(fullMap);
-        final copy = p.copyWith(isAvailable: false, isActive: false, isLegacy: true);
+        final copy = p.copyWith(
+          isAvailable: false,
+          isActive: false,
+          isLegacy: true,
+        );
 
         expect(copy.isAvailable, false);
         expect(copy.isActive, false);
@@ -273,11 +274,13 @@ void main() {
     });
 
     group('skill normalization', () {
+      test('maps legacy pro values to advanced', () {
+        expect(Player.normalizeSkillLevelCode('Pro'), 'Adv');
+        expect(Player.displaySkillLevel('Pro'), 'Advanced');
+      });
+
       test('matches abbreviated and full-form skills in filters', () {
-        final player = Player.fromMap({
-          ...fullMap,
-          'skillLevel': 'Beginner',
-        });
+        final player = Player.fromMap({...fullMap, 'skillLevel': 'Beginner'});
 
         expect(player.matchesSkillFilter('Beginner'), isTrue);
         expect(player.matchesSkillFilter('Beg'), isTrue);
@@ -288,6 +291,7 @@ void main() {
         expect(Player.displaySkillLevel('Beg'), 'Beginner');
         expect(Player.displaySkillLevel('Intermediate'), 'Intermediate');
         expect(Player.displaySkillLevel('Adv'), 'Advanced');
+        expect(Player.displaySkillLevel('Pro'), 'Advanced');
       });
     });
   });

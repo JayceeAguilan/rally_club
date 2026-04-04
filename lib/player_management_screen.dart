@@ -324,34 +324,29 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                                             ),
                                             const SizedBox(width: 8),
                                             _buildActionChip(
-                                              'Beg',
-                                              _selectedSkill == 'Beg',
+                                              'Beginner',
+                                              _selectedSkill == 'Beginner',
                                               () => setState(
-                                                () => _selectedSkill = 'Beg',
+                                                () =>
+                                                    _selectedSkill = 'Beginner',
                                               ),
                                             ),
                                             const SizedBox(width: 8),
                                             _buildActionChip(
-                                              'Int',
-                                              _selectedSkill == 'Int',
+                                              'Intermediate',
+                                              _selectedSkill == 'Intermediate',
                                               () => setState(
-                                                () => _selectedSkill = 'Int',
+                                                () => _selectedSkill =
+                                                    'Intermediate',
                                               ),
                                             ),
                                             const SizedBox(width: 8),
                                             _buildActionChip(
-                                              'Adv',
-                                              _selectedSkill == 'Adv',
+                                              'Advanced',
+                                              _selectedSkill == 'Advanced',
                                               () => setState(
-                                                () => _selectedSkill = 'Adv',
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            _buildActionChip(
-                                              'Pro',
-                                              _selectedSkill == 'Pro',
-                                              () => setState(
-                                                () => _selectedSkill = 'Pro',
+                                                () =>
+                                                    _selectedSkill = 'Advanced',
                                               ),
                                             ),
                                           ],
@@ -531,12 +526,12 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                                         p.gender.toLowerCase().contains(
                                           _searchQuery,
                                         ) ||
-                                        p.skillLevel.toLowerCase().contains(
-                                          _searchQuery,
-                                        );
+                                        p.displaySkillLabel
+                                            .toLowerCase()
+                                            .contains(_searchQuery);
                                     bool matchesSkill =
                                         _selectedSkill == 'All Levels' ||
-                                      p.matchesSkillFilter(_selectedSkill);
+                                        p.matchesSkillFilter(_selectedSkill);
                                     bool matchesStatus = true;
                                     if (_selectedStatus == 'Available Now') {
                                       matchesStatus = p.isAvailable;
@@ -829,7 +824,7 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              player.skillLevel,
+                              player.displaySkillLabel,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
