@@ -113,7 +113,9 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
       _nameController.text = widget.playerToEdit!.name;
       _notesController.text = widget.playerToEdit!.notes;
       _selectedGender = widget.playerToEdit!.gender;
-      _selectedSkill = widget.playerToEdit!.skillLevel;
+      _selectedSkill = Player.normalizeSkillLevelCode(
+        widget.playerToEdit!.skillLevel,
+      );
       _isAvailable = widget.playerToEdit!.isAvailable;
       _profileImageBase64 = widget.playerToEdit!.profileImageBase64;
     }

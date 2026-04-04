@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'models/app_user.dart';
 import 'models/club.dart';
+import 'models/player.dart';
 import 'firebase_service.dart';
 import 'notification_service.dart';
 
@@ -117,7 +118,7 @@ class AuthProvider extends ChangeNotifier {
     final playerData = {
       'name': playerName,
       'gender': gender,
-      'skillLevel': skillLevel,
+      'skillLevel': Player.normalizeSkillLevelCode(skillLevel),
       'countsAsPlayer': 1,
       'isAvailable': 1,
       'notes': '',

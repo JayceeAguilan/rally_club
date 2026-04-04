@@ -536,7 +536,7 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                                         );
                                     bool matchesSkill =
                                         _selectedSkill == 'All Levels' ||
-                                        p.skillLevel == _selectedSkill;
+                                      p.matchesSkillFilter(_selectedSkill);
                                     bool matchesStatus = true;
                                     if (_selectedStatus == 'Available Now') {
                                       matchesStatus = p.isAvailable;

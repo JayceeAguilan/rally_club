@@ -114,6 +114,19 @@ void main() {
         expect(map['createdAt'], '2025-01-01');
       });
 
+      test('normalizes long-form skill levels to canonical codes', () {
+        final p = Player(
+          name: 'Eve',
+          gender: 'Female',
+          skillLevel: 'Beginner',
+          isAvailable: true,
+        );
+
+        final map = p.toMap();
+
+        expect(map['skillLevel'], 'Beg');
+      });
+
       test('profile update map contains only editable fields', () {
         final p = Player(
           id: 'p3',
@@ -256,6 +269,25 @@ void main() {
         );
 
         expect(ownsProfile, isFalse);
+      });
+    });
+
+    group('skill normalization', () {
+      test('matches abbreviated and full-form skills in filters', () {
+        final player = Player.fromMap({
+          ...fullMap,
+          'skillLevel': 'Beginner',
+        });
+
+        expect(player.matchesSkillFilter('Beginner'), isTrue);
+        expect(player.matchesSkillFilter('Beg'), isTrue);
+        expect(player.matchesSkillFilter('Intermediate'), isFalse);
+      });
+
+      test('returns user-friendly display labels', () {
+        expect(Player.displaySkillLevel('Beg'), 'Beginner');
+        expect(Player.displaySkillLevel('Intermediate'), 'Intermediate');
+        expect(Player.displaySkillLevel('Adv'), 'Advanced');
       });
     });
   });

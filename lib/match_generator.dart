@@ -29,7 +29,7 @@ class MatchGenerationResult {
 class MatchGenerator {
   /// Skill weight mapping for balancing algorithms.
   static int _skillWeight(String skillLevel) {
-    switch (skillLevel) {
+    switch (Player.normalizeSkillLevelCode(skillLevel)) {
       case 'Beg': return 1;
       case 'Int': return 2;
       case 'Adv': return 3;
@@ -117,7 +117,7 @@ class MatchGenerator {
     // Group players by skill level
     final Map<String, List<Player>> groups = {};
     for (final p in players) {
-      groups.putIfAbsent(p.skillLevel, () => []).add(p);
+      groups.putIfAbsent(Player.normalizeSkillLevelCode(p.skillLevel), () => []).add(p);
     }
 
     // Find the first group with enough players

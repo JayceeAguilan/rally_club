@@ -20,7 +20,8 @@ class StandingsScreenState extends State<StandingsScreen> {
   String _sortBy = 'winPercent'; // 'winPercent', 'wins', 'losses'
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _filterSkill = 'All'; // 'All', 'Beg', 'Int', 'Adv', 'Pro'
+    String _filterSkill =
+        'All'; // 'All', 'Beginner', 'Intermediate', 'Advanced', 'Pro'
   String _filterGender = 'All'; // 'All', 'Male', 'Female'
 
   @override
@@ -193,7 +194,7 @@ class StandingsScreenState extends State<StandingsScreen> {
                             return _buildLeaderCard(
                               rank: '#${index + 1}',
                               name: player.name,
-                              subtitle: '${player.skillLevel.toUpperCase()} • ${player.gender.toUpperCase()}',
+                              subtitle: '${player.displaySkillLabel.toUpperCase()} • ${player.gender.toUpperCase()}',
                               wins: wins.toString(),
                               losses: losses.toString(),
                               winPercent: '${winPct.toStringAsFixed(0)}%',
@@ -264,11 +265,11 @@ class StandingsScreenState extends State<StandingsScreen> {
                             const SizedBox(width: 12),
                             _buildFilterChip('All', _filterSkill, (v) => setState(() => _filterSkill = v)),
                             const SizedBox(width: 8),
-                            _buildFilterChip('Beg', _filterSkill, (v) => setState(() => _filterSkill = v)),
+                            _buildFilterChip('Beginner', _filterSkill, (v) => setState(() => _filterSkill = v)),
                             const SizedBox(width: 8),
-                            _buildFilterChip('Int', _filterSkill, (v) => setState(() => _filterSkill = v)),
+                            _buildFilterChip('Intermediate', _filterSkill, (v) => setState(() => _filterSkill = v)),
                             const SizedBox(width: 8),
-                            _buildFilterChip('Adv', _filterSkill, (v) => setState(() => _filterSkill = v)),
+                            _buildFilterChip('Advanced', _filterSkill, (v) => setState(() => _filterSkill = v)),
                             const SizedBox(width: 8),
                             _buildFilterChip('Pro', _filterSkill, (v) => setState(() => _filterSkill = v)),
                           ],
@@ -325,7 +326,9 @@ class StandingsScreenState extends State<StandingsScreen> {
                       final player = s['player'] as Player;
                       final matchesSearch = _searchQuery.isEmpty ||
                           player.name.toLowerCase().contains(_searchQuery);
-                      final matchesSkill = _filterSkill == 'All' || player.skillLevel == _filterSkill;
+                      final matchesSkill = player.matchesSkillFilter(
+                        _filterSkill,
+                      );
                       final matchesGender = _filterGender == 'All' || player.gender == _filterGender;
                       return matchesSearch && matchesSkill && matchesGender;
                     }).toList();
@@ -357,7 +360,7 @@ class StandingsScreenState extends State<StandingsScreen> {
                           child: _buildListRow(
                             '${idx + 1}',
                             player.name,
-                            '${player.skillLevel.toUpperCase()} • ${player.gender.toUpperCase()}',
+                            '${player.displaySkillLabel.toUpperCase()} • ${player.gender.toUpperCase()}',
                             '$wins / $losses',
                             '$played',
                             winPct > 0 ? '${winPct.toStringAsFixed(1)}%' : '-',

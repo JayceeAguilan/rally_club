@@ -37,13 +37,55 @@ class Player {
     this.isLegacy = false,
   });
 
+  static String normalizeSkillLevelCode(String skillLevel) {
+    switch (skillLevel.trim().toLowerCase()) {
+      case 'beginner':
+      case 'beg':
+        return 'Beg';
+      case 'intermediate':
+      case 'int':
+        return 'Int';
+      case 'advanced':
+      case 'adv':
+        return 'Adv';
+      case 'pro':
+        return 'Pro';
+      default:
+        return skillLevel.trim();
+    }
+  }
+
+  static String displaySkillLevel(String skillLevel) {
+    switch (normalizeSkillLevelCode(skillLevel)) {
+      case 'Beg':
+        return 'Beginner';
+      case 'Int':
+        return 'Intermediate';
+      case 'Adv':
+        return 'Advanced';
+      case 'Pro':
+        return 'Pro';
+      default:
+        return skillLevel.trim();
+    }
+  }
+
+  String get normalizedSkillLevel => normalizeSkillLevelCode(skillLevel);
+
+  String get displaySkillLabel => displaySkillLevel(skillLevel);
+
+  bool matchesSkillFilter(String filterSkill) {
+    return filterSkill == 'All' ||
+        normalizedSkillLevel == normalizeSkillLevelCode(filterSkill);
+  }
+
   Map<String, dynamic> toMap() {
     final now = DateTime.now().toIso8601String();
     return {
       'id': id,
       'name': name,
       'gender': gender,
-      'skillLevel': skillLevel,
+      'skillLevel': normalizedSkillLevel,
       'countsAsPlayer': countsAsPlayer ? 1 : 0,
       'isAvailable': isAvailable ? 1 : 0,
       'notes': notes,
@@ -82,7 +124,7 @@ class Player {
     return {
       'name': name,
       'gender': gender,
-      'skillLevel': skillLevel,
+      'skillLevel': normalizedSkillLevel,
       'isAvailable': isAvailable ? 1 : 0,
       'notes': notes,
       'profileImageBase64': profileImageBase64,
