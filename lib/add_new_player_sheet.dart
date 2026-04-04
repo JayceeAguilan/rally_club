@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'main.dart';
 import 'firebase_service.dart';
@@ -26,6 +27,7 @@ class AddNewPlayerSheet extends StatefulWidget {
 }
 
 class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
+  static const int _maxWebImageBytes = 700 * 1024;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   String _selectedGender = 'Male';
@@ -43,14 +45,39 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
         imageQuality: 50,
       );
       if (file != null) {
+        final lowerName = file.name.toLowerCase();
+        if (kIsWeb &&
+            (lowerName.endsWith('.heic') || lowerName.endsWith('.heif'))) {
+          _showError(
+            'HEIC/HEIF photos from iPhone are not supported on the website yet. Please choose a JPG, PNG, or WebP image.',
+          );
+          return;
+        }
+
         final bytes = await file.readAsBytes();
+        if (kIsWeb && bytes.length > _maxWebImageBytes) {
+          _showError(
+            'This image is too large for the website upload flow. Please choose a smaller JPG/PNG/WebP image.',
+          );
+          return;
+        }
+
         setState(() {
           _profileImageBase64 = base64Encode(bytes);
         });
       }
-    } catch (_) {
-      // Ignored
+    } catch (error) {
+      _showError('Could not load that image. Please try another photo.');
+      debugPrint('AddNewPlayerSheet: image pick failed: $error');
     }
+  }
+
+  void _showError(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -459,23 +486,32 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
                               profileImageBase64: _profileImageBase64,
                             );
 
-                      if (widget.playerToEdit == null) {
-                        await FirebaseService().insertPlayer(
-                          player,
-                          clubId: auth.appUser!.clubId!,
-                          ownerUid: auth.firebaseUser!.uid,
-                          actingUid: auth.firebaseUser!.uid,
-                        );
-                      } else {
-                        await FirebaseService().updatePlayer(
-                          player,
-                          actingUid: auth.firebaseUser!.uid,
-                          clubId: auth.appUser!.clubId!,
-                        );
-                      }
+                      try {
+                        if (widget.playerToEdit == null) {
+                          await FirebaseService().insertPlayer(
+                            player,
+                            clubId: auth.appUser!.clubId!,
+                            ownerUid: auth.firebaseUser!.uid,
+                            actingUid: auth.firebaseUser!.uid,
+                          );
+                        } else {
+                          await FirebaseService().updatePlayer(
+                            player,
+                            actingUid: auth.firebaseUser!.uid,
+                            clubId: auth.appUser!.clubId!,
+                          );
+                        }
 
-                      if (context.mounted) {
-                        Navigator.pop(context, true);
+                        if (context.mounted) {
+                          Navigator.pop(context, true);
+                        }
+                      } catch (error) {
+                        debugPrint('AddNewPlayerSheet: save failed: $error');
+                        if (context.mounted) {
+                          _showError(
+                            'Could not save this player. If you added a photo, try a smaller JPG or PNG image.',
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
