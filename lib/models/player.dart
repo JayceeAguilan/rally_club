@@ -78,6 +78,14 @@ class Player {
     );
   }
 
+  bool isOwnedByUser({String? linkedPlayerId, String? userUid}) {
+    if (linkedPlayerId != null && linkedPlayerId.isNotEmpty && id == linkedPlayerId) {
+      return true;
+    }
+
+    return userUid != null && userUid.isNotEmpty && ownerUid == userUid;
+  }
+
   /// Create a copy with updated fields.
   Player copyWith({
     String? id,

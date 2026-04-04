@@ -465,7 +465,11 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
                       );
                       final isAdmin = auth.isAdmin;
                       final isOwnProfile =
-                          widget.playerToEdit?.id == auth.appUser?.playerId;
+                          widget.playerToEdit?.isOwnedByUser(
+                            linkedPlayerId: auth.appUser?.playerId,
+                            userUid: auth.firebaseUser?.uid,
+                          ) ??
+                          false;
 
                       if (widget.playerToEdit == null && !isAdmin) {
                         if (context.mounted) {

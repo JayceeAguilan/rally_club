@@ -185,5 +185,40 @@ void main() {
         expect(copy.ownerUid, p.ownerUid);
       });
     });
+
+    group('isOwnedByUser', () {
+      test('matches when linked player id is current', () {
+        final player = Player.fromMap(fullMap);
+
+        final ownsProfile = player.isOwnedByUser(
+          linkedPlayerId: 'p1',
+          userUid: 'different-user',
+        );
+
+        expect(ownsProfile, isTrue);
+      });
+
+      test('falls back to owner uid when player link is missing', () {
+        final player = Player.fromMap(fullMap);
+
+        final ownsProfile = player.isOwnedByUser(
+          linkedPlayerId: null,
+          userUid: 'u1',
+        );
+
+        expect(ownsProfile, isTrue);
+      });
+
+      test('returns false when neither link matches', () {
+        final player = Player.fromMap(fullMap);
+
+        final ownsProfile = player.isOwnedByUser(
+          linkedPlayerId: 'p2',
+          userUid: 'u2',
+        );
+
+        expect(ownsProfile, isFalse);
+      });
+    });
   });
 }

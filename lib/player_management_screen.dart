@@ -77,7 +77,12 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
   Future<void> _openAddPlayerSheet({Player? player}) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final isAdmin = auth.isAdmin;
-    final canEditPlayer = player != null && player.id == auth.appUser?.playerId;
+    final canEditPlayer =
+        player?.isOwnedByUser(
+          linkedPlayerId: auth.appUser?.playerId,
+          userUid: auth.firebaseUser?.uid,
+        ) ??
+        false;
 
     if (player == null && !isAdmin) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -160,6 +165,7 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
     final auth = context.watch<AuthProvider>();
     final isAdmin = auth.isAdmin;
     final currentPlayerId = auth.appUser?.playerId;
+    final currentUid = auth.firebaseUser?.uid;
     final screenTitle = isAdmin ? 'Player Management' : 'My Profile';
     final emptyStateText = isAdmin
         ? 'No local players found. Create a new entry.'
@@ -546,7 +552,12 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                                         matchesGender;
                                   }).toList()
                                 : allPlayers
-                                      .where((p) => p.id == currentPlayerId)
+                                      .where(
+                                        (p) => p.isOwnedByUser(
+                                          linkedPlayerId: currentPlayerId,
+                                          userUid: currentUid,
+                                        ),
+                                      )
                                       .toList();
 
                             if (players.isEmpty) {
@@ -701,7 +712,10 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
   }) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final isAdmin = auth.isAdmin;
-    final isOwnProfile = player.id == auth.appUser?.playerId;
+    final isOwnProfile = player.isOwnedByUser(
+      linkedPlayerId: auth.appUser?.playerId,
+      userUid: auth.firebaseUser?.uid,
+    );
     final canEditPlayer = isAdmin || isOwnProfile;
     final canDeletePlayer = isAdmin;
     final canToggleAvailability = isAdmin || isOwnProfile;
