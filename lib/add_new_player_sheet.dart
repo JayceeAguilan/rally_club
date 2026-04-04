@@ -27,7 +27,8 @@ class AddNewPlayerSheet extends StatefulWidget {
 }
 
 class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
-  static const int _maxWebImageBytes = 700 * 1024;
+  static const int _maxWebImageBytes = 350 * 1024;
+  static const int _maxWebBase64Chars = 500 * 1024;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   String _selectedGender = 'Male';
@@ -57,13 +58,21 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
         final bytes = await file.readAsBytes();
         if (kIsWeb && bytes.length > _maxWebImageBytes) {
           _showError(
-            'This image is too large for the website upload flow. Please choose a smaller JPG/PNG/WebP image.',
+            'This image is too large for the website upload flow. Please choose a smaller JPG or WebP image.',
+          );
+          return;
+        }
+
+        final encoded = base64Encode(bytes);
+        if (kIsWeb && encoded.length > _maxWebBase64Chars) {
+          _showError(
+            'This image is still too large for website storage. Please choose a smaller JPG or WebP image.',
           );
           return;
         }
 
         setState(() {
-          _profileImageBase64 = base64Encode(bytes);
+          _profileImageBase64 = encoded;
         });
       }
     } catch (error) {
@@ -78,6 +87,23 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _buildSaveErrorMessage(Object error) {
+    final details = error.toString().toLowerCase();
+    if (_profileImageBase64 != null &&
+        (details.contains('size') ||
+            details.contains('too large') ||
+            details.contains('maximum') ||
+            details.contains('invalid-argument'))) {
+      return 'This player photo is too large for the website version. Please use a smaller JPG or WebP image.';
+    }
+
+    if (_profileImageBase64 != null) {
+      return 'Could not save this player photo on the website. Please try a smaller JPG or WebP image.';
+    }
+
+    return 'Could not save this player. Please try again.';
   }
 
   @override
@@ -508,9 +534,7 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
                       } catch (error) {
                         debugPrint('AddNewPlayerSheet: save failed: $error');
                         if (context.mounted) {
-                          _showError(
-                            'Could not save this player. If you added a photo, try a smaller JPG or PNG image.',
-                          );
+                          _showError(_buildSaveErrorMessage(error));
                         }
                       }
                     },
