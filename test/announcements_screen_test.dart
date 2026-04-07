@@ -33,6 +33,24 @@ Announcement _buildAnnouncement() {
   );
 }
 
+Announcement _buildAnnouncementWith({
+  required String id,
+  required String title,
+  required String createdAt,
+}) {
+  return Announcement(
+    id: id,
+    title: title,
+    scheduledAt: '2026-04-05T09:30:00.000',
+    location: 'North Court',
+    createdByUid: 'admin-1',
+    createdByName: 'Coach Jay',
+    clubId: 'club-1',
+    createdAt: createdAt,
+    updatedAt: createdAt,
+  );
+}
+
 Widget _buildWidget({
   required AuthProvider auth,
   required Future<List<Announcement>> Function(String clubId) loader,
@@ -145,5 +163,51 @@ void main() {
       find.text('No announcements match that search yet.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('newer announcements render before older ones', (tester) async {
+    tester.view.physicalSize = const Size(1280, 1920);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final auth = AuthProvider.test(
+      appUser: _buildUser(role: 'member'),
+      isLoading: false,
+      isAuthenticated: true,
+      isEmailVerified: true,
+    );
+
+    final olderAnnouncement = _buildAnnouncementWith(
+      id: 'a-old',
+      title: 'Older Club Update',
+      createdAt: '2026-04-03T08:00:00.000',
+    );
+    final newerAnnouncement = _buildAnnouncementWith(
+      id: 'a-new',
+      title: 'Newest Club Update',
+      createdAt: '2026-04-05T08:00:00.000',
+    );
+
+    await tester.pumpWidget(
+      _buildWidget(
+        auth: auth,
+        loader: (_) async => [olderAnnouncement, newerAnnouncement],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final titleTexts = tester.widgetList<Text>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            (widget.data == 'Older Club Update' ||
+                widget.data == 'Newest Club Update'),
+      ),
+    );
+
+    expect(titleTexts.map((text) => text.data).toList(), [
+      'Newest Club Update',
+      'Older Club Update',
+    ]);
   });
 }

@@ -207,14 +207,23 @@ class FirebaseService {
     final snapshot = await _db
         .collection('announcements')
         .where('clubId', isEqualTo: clubId)
-        .orderBy('scheduledAt')
         .get();
 
-    return snapshot.docs.map((doc) {
+    final announcements = snapshot.docs.map((doc) {
       final data = doc.data();
       data['id'] = doc.id;
       return Announcement.fromMap(data);
     }).toList();
+
+    announcements.sort((a, b) {
+      final aCreatedAt =
+          a.createdDateTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bCreatedAt =
+          b.createdDateTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bCreatedAt.compareTo(aCreatedAt);
+    });
+
+    return announcements;
   }
 
   Future<void> addAnnouncementComment({

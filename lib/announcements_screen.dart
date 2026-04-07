@@ -231,6 +231,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             return haystack.contains(_searchQuery);
           }).toList();
 
+          filteredAnnouncements.sort((a, b) {
+            final aCreatedAt =
+                a.createdDateTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final bCreatedAt =
+                b.createdDateTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return bCreatedAt.compareTo(aCreatedAt);
+          });
+
           return LayoutBuilder(
             builder: (context, constraints) {
               final r = Responsive(context);
