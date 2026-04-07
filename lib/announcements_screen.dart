@@ -17,6 +17,7 @@ class AnnouncementsScreen extends StatefulWidget {
     this.loadInboxStatus,
     this.markAnnouncementsSeen,
     this.onInboxStateChanged,
+    this.pickFilterDate,
     this.visitMarker = 0,
   });
 
@@ -25,6 +26,8 @@ class AnnouncementsScreen extends StatefulWidget {
   loadInboxStatus;
   final Future<void> Function(String uid, String clubId)? markAnnouncementsSeen;
   final VoidCallback? onInboxStateChanged;
+  final Future<DateTime?> Function(BuildContext context, DateTime initialDate)?
+  pickFilterDate;
   final int visitMarker;
 
   @override
@@ -37,6 +40,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   List<Announcement>? _cachedAnnouncements;
   AnnouncementInboxStatus _inboxStatus = const AnnouncementInboxStatus();
   String _searchQuery = '';
+  DateTime? _selectedFilterDate;
   bool _isLoadingInboxStatus = true;
   bool _hasQueuedSeenSync = false;
 
@@ -141,6 +145,63 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     }
   }
 
+  Future<void> _pickAnnouncementDateFilter() async {
+    final now = DateTime.now();
+    final initialDate = _selectedFilterDate ?? now;
+    final pickFilterDate =
+        widget.pickFilterDate ??
+        ((BuildContext context, DateTime initialDate) => showDatePicker(
+          context: context,
+          initialDate: initialDate,
+          firstDate: now.subtract(const Duration(days: 365)),
+          lastDate: now.add(const Duration(days: 730)),
+        ));
+
+    final selectedDate = await pickFilterDate(context, initialDate);
+    if (selectedDate == null || !mounted) return;
+
+    setState(() {
+      _selectedFilterDate = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+      );
+    });
+  }
+
+  void _clearAnnouncementDateFilter() {
+    if (_selectedFilterDate == null) return;
+    setState(() => _selectedFilterDate = null);
+  }
+
+  bool _matchesSelectedDate(Announcement announcement) {
+    if (_selectedFilterDate == null) return true;
+    final scheduledAt = announcement.scheduledDateTime;
+    if (scheduledAt == null) return false;
+    return scheduledAt.year == _selectedFilterDate!.year &&
+        scheduledAt.month == _selectedFilterDate!.month &&
+        scheduledAt.day == _selectedFilterDate!.day;
+  }
+
+  String _formatFilterDate(DateTime dateTime) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final month = months[dateTime.month - 1];
+    return '$month ${dateTime.day}, ${dateTime.year}';
+  }
+
   String _formatSchedule(DateTime? dateTime) {
     if (dateTime == null) return 'Schedule unavailable';
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -221,15 +282,18 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             );
           }
 
-          final filteredAnnouncements = announcements.where((announcement) {
-            if (_searchQuery.isEmpty) return true;
-            final haystack = [
-              announcement.title,
-              announcement.location,
-              announcement.createdByName,
-            ].join(' ').toLowerCase();
-            return haystack.contains(_searchQuery);
-          }).toList();
+          final filteredAnnouncements = announcements
+              .where((announcement) {
+                if (_searchQuery.isEmpty) return true;
+                final haystack = [
+                  announcement.title,
+                  announcement.location,
+                  announcement.createdByName,
+                ].join(' ').toLowerCase();
+                return haystack.contains(_searchQuery);
+              })
+              .where(_matchesSelectedDate)
+              .toList();
 
           filteredAnnouncements.sort((a, b) {
             final aCreatedAt =
@@ -238,6 +302,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 b.createdDateTime ?? DateTime.fromMillisecondsSinceEpoch(0);
             return bCreatedAt.compareTo(aCreatedAt);
           });
+
+          final hasActiveFilters =
+              _searchQuery.isNotEmpty || _selectedFilterDate != null;
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -315,6 +382,60 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                   ),
                                 ),
                               ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: _pickAnnouncementDateFilter,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.primary(context),
+                                    backgroundColor: _selectedFilterDate == null
+                                        ? AppColors.surface(context)
+                                        : AppColors.primaryContainer(context),
+                                    side: BorderSide(
+                                      color: _selectedFilterDate == null
+                                          ? AppColors.divider(context)
+                                          : AppColors.primary(context),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.event),
+                                  label: Text(
+                                    _selectedFilterDate == null
+                                        ? 'Filter by date'
+                                        : _formatFilterDate(
+                                            _selectedFilterDate!,
+                                          ),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                                if (_selectedFilterDate != null)
+                                  TextButton.icon(
+                                    onPressed: _clearAnnouncementDateFilter,
+                                    icon: const Icon(Icons.close),
+                                    label: const Text('Clear date'),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.textMuted(
+                                        context,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 14,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             if (!_isLoadingInboxStatus &&
                                 _inboxStatus.unreadCount > 0) ...[
@@ -399,8 +520,11 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         child: Padding(
                           padding: const EdgeInsets.all(24),
                           child: Text(
-                            _searchQuery.isNotEmpty
-                                ? 'No announcements match that search yet.'
+                            hasActiveFilters
+                                ? _selectedFilterDate != null &&
+                                          _searchQuery.isEmpty
+                                      ? 'No announcements are scheduled for that date yet.'
+                                      : 'No announcements match that search or date yet.'
                                 : isAdmin
                                 ? 'No announcements yet. Post the next play session for your members.'
                                 : 'No announcements yet. Check back for the next scheduled play.',

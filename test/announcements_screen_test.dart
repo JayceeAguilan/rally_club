@@ -37,11 +37,12 @@ Announcement _buildAnnouncementWith({
   required String id,
   required String title,
   required String createdAt,
+  String scheduledAt = '2026-04-05T09:30:00.000',
 }) {
   return Announcement(
     id: id,
     title: title,
-    scheduledAt: '2026-04-05T09:30:00.000',
+    scheduledAt: scheduledAt,
     location: 'North Court',
     createdByUid: 'admin-1',
     createdByName: 'Coach Jay',
@@ -57,6 +58,8 @@ Widget _buildWidget({
   Future<AnnouncementInboxStatus> Function(String uid, String clubId)?
   inboxLoader,
   Future<void> Function(String uid, String clubId)? markSeen,
+  Future<DateTime?> Function(BuildContext context, DateTime initialDate)?
+  pickFilterDate,
 }) {
   return ChangeNotifierProvider<AuthProvider>.value(
     value: auth,
@@ -65,6 +68,7 @@ Widget _buildWidget({
         loadAnnouncements: loader,
         loadInboxStatus: inboxLoader,
         markAnnouncementsSeen: markSeen,
+        pickFilterDate: pickFilterDate,
       ),
     ),
   );
@@ -160,7 +164,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('No announcements match that search yet.'),
+      find.text('No announcements match that search or date yet.'),
       findsOneWidget,
     );
   });
@@ -209,5 +213,59 @@ void main() {
       'Newest Club Update',
       'Older Club Update',
     ]);
+  });
+
+  testWidgets('date filter narrows announcements by scheduled day', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 1920);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final auth = AuthProvider.test(
+      appUser: _buildUser(role: 'member'),
+      isLoading: false,
+      isAuthenticated: true,
+      isEmailVerified: true,
+    );
+
+    final tuesdayAnnouncement = _buildAnnouncementWith(
+      id: 'a-tue',
+      title: 'Tuesday Open Play',
+      createdAt: '2026-04-03T08:00:00.000',
+      scheduledAt: '2026-04-07T09:30:00.000',
+    );
+    final thursdayAnnouncement = _buildAnnouncementWith(
+      id: 'a-thu',
+      title: 'Thursday Drill Session',
+      createdAt: '2026-04-04T08:00:00.000',
+      scheduledAt: '2026-04-09T18:00:00.000',
+    );
+
+    await tester.pumpWidget(
+      _buildWidget(
+        auth: auth,
+        loader: (_) async => [tuesdayAnnouncement, thursdayAnnouncement],
+        pickFilterDate: (context, initialDate) async => DateTime(2026, 4, 9),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tuesday Open Play'), findsOneWidget);
+    expect(find.text('Thursday Drill Session'), findsOneWidget);
+
+    await tester.tap(find.text('Filter by date'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Apr 9, 2026'), findsOneWidget);
+    expect(find.text('Thursday Drill Session'), findsOneWidget);
+    expect(find.text('Tuesday Open Play'), findsNothing);
+
+    await tester.tap(find.text('Clear date'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Filter by date'), findsOneWidget);
+    expect(find.text('Tuesday Open Play'), findsOneWidget);
+    expect(find.text('Thursday Drill Session'), findsOneWidget);
   });
 }
