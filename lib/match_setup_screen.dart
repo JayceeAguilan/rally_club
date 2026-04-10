@@ -21,7 +21,6 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
   String _selectedLogic = 'auto';
   bool _isGenerating = false;
   Future<List<Player>> _playersFuture = Future.value(const <Player>[]);
-  List<Player> _permanentPlayers = const <Player>[];
   List<Player> _guestPlayers = SessionGuestPlayerStore.instance.players;
 
   @override
@@ -34,7 +33,6 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (!auth.isAdmin) {
       setState(() {
-        _permanentPlayers = const <Player>[];
         _playersFuture = Future.value(const <Player>[]);
       });
       return;
@@ -45,10 +43,10 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
         .then((players) {
           if (mounted) {
             setState(() {
-              _permanentPlayers = players;
+              _playersFuture = Future.value(players);
             });
           } else {
-            _permanentPlayers = players;
+            _playersFuture = Future.value(players);
           }
           return players;
         });
@@ -59,7 +57,10 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
   }
 
   List<Player> _buildSessionPlayers(List<Player> permanentPlayers) {
-    return [...permanentPlayers, ..._guestPlayers];
+    return SessionGuestPlayerStore.mergeSessionPlayers(
+      permanentPlayers: permanentPlayers,
+      guestPlayers: _guestPlayers,
+    );
   }
 
   Future<Map<String, Map<String, int>>?> _loadStandingsMap({
@@ -119,7 +120,6 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
 
     setState(() {
       _isGenerating = false;
-      _permanentPlayers = permanentPlayers;
     });
 
     if (!result.isSuccess) {
@@ -156,8 +156,17 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
       return;
     }
 
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final permanentPlayers = await FirebaseService().getPlayers(
+      clubId: auth.appUser!.clubId!,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
     final normalizedName = sessionPlayer.name.trim().toLowerCase();
-    final hasDuplicateName = _buildSessionPlayers(_permanentPlayers).any(
+    final hasDuplicateName = _buildSessionPlayers(permanentPlayers).any(
       (existingPlayer) =>
           existingPlayer.id != sessionPlayer.id &&
           existingPlayer.name.trim().toLowerCase() == normalizedName,

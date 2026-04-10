@@ -28,4 +28,34 @@ void main() {
     store.clear();
     expect(store.players, isEmpty);
   });
+
+  test(
+    'mergeSessionPlayers excludes guests that duplicate permanent names',
+    () {
+      final mergedPlayers = SessionGuestPlayerStore.mergeSessionPlayers(
+        permanentPlayers: [
+          Player(
+            id: 'permanent-mj',
+            name: 'MJ',
+            gender: 'Male',
+            skillLevel: 'Beg',
+            isAvailable: true,
+          ),
+        ],
+        guestPlayers: [
+          Player(
+            id: 'guest-mj',
+            name: ' mj ',
+            gender: 'Male',
+            skillLevel: 'Beg',
+            isAvailable: true,
+            isGuest: true,
+          ),
+        ],
+      );
+
+      expect(mergedPlayers, hasLength(1));
+      expect(mergedPlayers.single.id, 'permanent-mj');
+    },
+  );
 }
