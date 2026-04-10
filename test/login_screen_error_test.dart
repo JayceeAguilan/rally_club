@@ -193,6 +193,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('CONTINUE WITH GOOGLE'), findsOneWidget);
+    expect(find.byKey(const Key('google-login-logo')), findsOneWidget);
 
     await tester.tap(find.text('CONTINUE WITH GOOGLE'));
     await tester.pumpAndSettle();

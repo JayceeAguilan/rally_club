@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'auth_provider.dart';
 import 'register_screen.dart';
@@ -415,17 +416,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                       width: 22,
                                       height: 22,
                                       alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF1F3F4),
-                                        borderRadius: BorderRadius.circular(11),
-                                      ),
-                                      child: const Text(
-                                        'G',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w900,
-                                          color: Color(0xFF4285F4),
-                                        ),
+                                      child: SvgPicture.asset(
+                                        'lib/assets/image/google_logo.svg',
+                                        key: const Key('google-login-logo'),
+                                        width: 22,
+                                        height: 22,
                                       ),
                                     ),
                                     const SizedBox(width: 10),
