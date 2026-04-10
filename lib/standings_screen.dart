@@ -17,7 +17,7 @@ class StandingsScreen extends StatefulWidget {
 class StandingsScreenState extends State<StandingsScreen> {
   late Future<List<Map<String, dynamic>>> _standingsFuture;
   List<Map<String, dynamic>>? _cachedStandings;
-  String _sortBy = 'winPercent'; // 'winPercent', 'wins', 'losses'
+  String _sortBy = 'winPercent';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _filterSkill = 'All'; // 'All', 'Beginner', 'Intermediate', 'Advanced'
@@ -66,6 +66,24 @@ class StandingsScreenState extends State<StandingsScreen> {
           (a, b) =>
               (b['matchesPlayed'] as int).compareTo(a['matchesPlayed'] as int),
         );
+        break;
+      case 'recentFormScore':
+        standings.sort((a, b) {
+          final formCmp = (b['recentFormScore'] as double).compareTo(
+            a['recentFormScore'] as double,
+          );
+          if (formCmp != 0) return formCmp;
+          return (b['wins'] as int).compareTo(a['wins'] as int);
+        });
+        break;
+      case 'currentStreak':
+        standings.sort((a, b) {
+          final streakCmp = (b['currentStreak'] as int).compareTo(
+            a['currentStreak'] as int,
+          );
+          if (streakCmp != 0) return streakCmp;
+          return (b['wins'] as int).compareTo(a['wins'] as int);
+        });
         break;
       case 'winPercent':
       default:
@@ -230,6 +248,12 @@ class StandingsScreenState extends State<StandingsScreen> {
                                   final wins = s['wins'] as int;
                                   final losses = s['losses'] as int;
                                   final winPct = s['winPercent'] as double;
+                                  final matchesPlayed =
+                                      s['matchesPlayed'] as int;
+                                  final streakLabel =
+                                      s['streakLabel'] as String? ?? '-';
+                                  final recentFormScore =
+                                      s['recentFormScore'] as double? ?? 0.0;
                                   return _buildLeaderCard(
                                     rank: '#${index + 1}',
                                     name: player.name,
@@ -238,6 +262,10 @@ class StandingsScreenState extends State<StandingsScreen> {
                                     wins: wins.toString(),
                                     losses: losses.toString(),
                                     winPercent: '${winPct.toStringAsFixed(0)}%',
+                                    matchesPlayed: matchesPlayed.toString(),
+                                    streakLabel: streakLabel,
+                                    recentFormScore: recentFormScore
+                                        .toStringAsFixed(0),
                                     isFirst: index == 0,
                                     profileImageBase64:
                                         player.profileImageBase64,
@@ -320,6 +348,10 @@ class StandingsScreenState extends State<StandingsScreen> {
                                   _buildSortChip('Most Losses', 'losses'),
                                   const SizedBox(width: 8),
                                   _buildSortChip('Matches', 'matchesPlayed'),
+                                  const SizedBox(width: 8),
+                                  _buildSortChip('Form', 'recentFormScore'),
+                                  const SizedBox(width: 8),
+                                  _buildSortChip('Streak', 'currentStreak'),
                                 ],
                               ),
                             ),
@@ -534,6 +566,20 @@ class StandingsScreenState extends State<StandingsScreen> {
                               final losses = s['losses'] as int;
                               final played = s['matchesPlayed'] as int;
                               final winPct = s['winPercent'] as double;
+                              final streakLabel =
+                                  s['streakLabel'] as String? ?? '-';
+                              final recentResults =
+                                  (s['recentResults'] as List<dynamic>? ??
+                                          const [])
+                                      .cast<String>();
+                              final recentFormScore =
+                                  s['recentFormScore'] as double? ?? 0.0;
+                              final bestPartnerName =
+                                  s['bestPartnerName'] as String?;
+                              final bestPartnerGames =
+                                  s['bestPartnerGames'] as int? ?? 0;
+                              final bestPartnerWinPercent =
+                                  s['bestPartnerWinPercent'] as double? ?? 0.0;
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
@@ -546,6 +592,14 @@ class StandingsScreenState extends State<StandingsScreen> {
                                   winPct > 0
                                       ? '${winPct.toStringAsFixed(1)}%'
                                       : '-',
+                                  streakLabel,
+                                  recentResults,
+                                  recentFormScore > 0
+                                      ? recentFormScore.toStringAsFixed(0)
+                                      : '-',
+                                  bestPartnerName == null
+                                      ? 'No doubles chemistry yet'
+                                      : '$bestPartnerName • ${bestPartnerWinPercent.toStringAsFixed(0)}% in $bestPartnerGames',
                                   player.profileImageBase64,
                                 ),
                               );
@@ -635,6 +689,9 @@ class StandingsScreenState extends State<StandingsScreen> {
     required String wins,
     required String losses,
     required String winPercent,
+    required String matchesPlayed,
+    required String streakLabel,
+    required String recentFormScore,
     required bool isFirst,
     String? profileImageBase64,
   }) {
@@ -828,6 +885,20 @@ class StandingsScreenState extends State<StandingsScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildTrendPill('GP', matchesPlayed, isFirst: isFirst),
+                  _buildTrendPill('STREAK', streakLabel, isFirst: isFirst),
+                  _buildTrendPill(
+                    'FORM',
+                    recentFormScore == '-' ? '-' : '$recentFormScore/100',
+                    isFirst: isFirst,
+                  ),
+                ],
+              ),
             ],
           ),
         ],
@@ -842,6 +913,10 @@ class StandingsScreenState extends State<StandingsScreen> {
     String wl,
     String played,
     String winPercent,
+    String streakLabel,
+    List<String> recentResults,
+    String recentFormScore,
+    String chemistryLabel,
     String? profileImageBase64,
   ) {
     return Container(
@@ -858,98 +933,158 @@ class StandingsScreenState extends State<StandingsScreen> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          SizedBox(
-            width: 32,
-            child: Text(
-              rank,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                fontStyle: FontStyle.italic,
-                color: AppColors.textSub(context),
-              ),
-            ),
-          ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerHigh(context),
-              shape: BoxShape.circle,
-              image: profileImageBase64 != null
-                  ? DecorationImage(
-                      image: MemoryImage(base64Decode(profileImageBase64)),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-            ),
-            child: profileImageBase64 == null
-                ? Icon(Icons.person, color: AppColors.textMuted(context))
-                : null,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
+          Row(
+            children: [
+              SizedBox(
+                width: 32,
+                child: Text(
+                  rank,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
+                    color: AppColors.textSub(context),
+                  ),
+                ),
+              ),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerHigh(context),
+                  shape: BoxShape.circle,
+                  image: profileImageBase64 != null
+                      ? DecorationImage(
+                          image: MemoryImage(base64Decode(profileImageBase64)),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: profileImageBase64 == null
+                    ? Icon(Icons.person, color: AppColors.textMuted(context))
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textMain(context),
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textMuted(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  wl,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textMain(context),
                   ),
                 ),
-                Text(
-                  subtitle,
+              ),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  played,
+                  textAlign: TextAlign.right,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textMuted(context),
                   ),
                 ),
+              ),
+              SizedBox(
+                width: 50,
+                child: Text(
+                  winPercent,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary(context),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildTrendPill('STREAK', streakLabel),
+                _buildTrendPill(
+                  'FORM',
+                  recentFormScore == '-' ? '-' : '$recentFormScore/100',
+                ),
+                _buildTrendPill(
+                  'RECENT',
+                  recentResults.isEmpty ? '-' : recentResults.join(' '),
+                ),
+                _buildTrendPill('CHEM', chemistryLabel),
               ],
             ),
           ),
-          SizedBox(
-            width: 40,
-            child: Text(
-              wl,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textMain(context),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 40,
-            child: Text(
-              played,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textMuted(context),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 50,
-            child: Text(
-              winPercent,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-                color: AppColors.primary(context),
-              ),
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTrendPill(String label, String value, {bool isFirst = false}) {
+    final background = isFirst
+        ? const Color(0xFFD1FA00).withValues(alpha: 0.18)
+        : AppColors.surfaceContainerHigh(context);
+    final foreground = isFirst
+        ? const Color(0xFFD1FA00)
+        : AppColors.textMuted(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: foreground,
+          ),
+          children: [
+            TextSpan(text: '$label '),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                color: isFirst ? Colors.white : AppColors.textMain(context),
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

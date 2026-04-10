@@ -4,6 +4,7 @@ import 'models/announcement_comment.dart';
 import 'models/announcement_inbox_status.dart';
 import 'models/player.dart';
 import 'models/match_record.dart';
+import 'player_standings_utils.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -463,65 +464,7 @@ class FirebaseService {
   }) async {
     final players = await getPlayers(clubId: clubId);
     final matches = await getMatches(clubId: clubId);
-
-    final Map<String, Map<String, dynamic>> stats = {};
-    for (var p in players) {
-      if (p.id != null) {
-        stats[p.id!] = {
-          'player': p,
-          'wins': 0,
-          'losses': 0,
-          'matchesPlayed': 0,
-          'winPercent': 0.0,
-        };
-      }
-    }
-
-    for (var match in matches) {
-      final winTeamIds = match.winningSide == 'A'
-          ? match.teamAPlayerIds
-          : match.teamBPlayerIds;
-      final loseTeamIds = match.winningSide == 'A'
-          ? match.teamBPlayerIds
-          : match.teamAPlayerIds;
-
-      for (var id in winTeamIds.split(',')) {
-        id = id.trim();
-        if (stats.containsKey(id)) {
-          stats[id]!['wins'] = (stats[id]!['wins'] as int) + 1;
-          stats[id]!['matchesPlayed'] =
-              (stats[id]!['matchesPlayed'] as int) + 1;
-        }
-      }
-
-      for (var id in loseTeamIds.split(',')) {
-        id = id.trim();
-        if (stats.containsKey(id)) {
-          stats[id]!['losses'] = (stats[id]!['losses'] as int) + 1;
-          stats[id]!['matchesPlayed'] =
-              (stats[id]!['matchesPlayed'] as int) + 1;
-        }
-      }
-    }
-
-    // Calculate win %
-    final results = stats.values.toList();
-    for (var r in results) {
-      final w = r['wins'] as int;
-      final total = r['matchesPlayed'] as int;
-      r['winPercent'] = total > 0 ? (w / total * 100.0) : 0.0;
-    }
-
-    // Default sort by win% descending, then wins descending
-    results.sort((a, b) {
-      int cmp = (b['winPercent'] as double).compareTo(
-        a['winPercent'] as double,
-      );
-      if (cmp != 0) return cmp;
-      return (b['wins'] as int).compareTo(a['wins'] as int);
-    });
-
-    return results;
+    return buildPlayerStandings(players: players, matches: matches);
   }
 
   // --- LEGACY DATA MIGRATION ---
