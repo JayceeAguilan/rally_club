@@ -399,9 +399,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             const SizedBox(height: 16),
           ],
-
-          _buildSecondaryNavItem(Icons.settings, 'Settings'),
-          _buildSecondaryNavItem(Icons.help, 'Support'),
           const SizedBox(height: 8),
 
           // Sign Out Button
@@ -698,25 +695,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  Widget _buildSecondaryNavItem(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.textMuted(context), size: 24),
-          const SizedBox(width: 16),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textMuted(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class AppBrandTitle extends StatelessWidget {
