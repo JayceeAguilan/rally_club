@@ -425,7 +425,7 @@ class FirebaseService {
     final teamBIds = match.teamBPlayerIds.split(',');
 
     for (final id in teamAIds) {
-      if (id.isEmpty) continue;
+      if (id.isEmpty || Player.isGuestId(id)) continue;
       final playerRef = _db.collection('players').doc(id.trim());
       batch.update(playerRef, {
         'lastResult': match.winningSide == 'A' ? 'win' : 'loss',
@@ -433,7 +433,7 @@ class FirebaseService {
     }
 
     for (final id in teamBIds) {
-      if (id.isEmpty) continue;
+      if (id.isEmpty || Player.isGuestId(id)) continue;
       final playerRef = _db.collection('players').doc(id.trim());
       batch.update(playerRef, {
         'lastResult': match.winningSide == 'B' ? 'win' : 'loss',

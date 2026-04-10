@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
 class MatchSavedScreen extends StatefulWidget {
-  const MatchSavedScreen({super.key});
+  final bool includedGuestPlayers;
+
+  const MatchSavedScreen({super.key, this.includedGuestPlayers = false});
 
   @override
   State<MatchSavedScreen> createState() => _MatchSavedScreenState();
 }
 
-class _MatchSavedScreenState extends State<MatchSavedScreen> with SingleTickerProviderStateMixin {
+class _MatchSavedScreenState extends State<MatchSavedScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -16,16 +19,20 @@ class _MatchSavedScreenState extends State<MatchSavedScreen> with SingleTickerPr
   void initState() {
     super.initState();
     _controller = AnimationController(
-       vsync: this,
-       duration: const Duration(milliseconds: 1200),
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.5, curve: Curves.easeIn)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
+      ),
     );
 
     _controller.forward();
@@ -84,7 +91,9 @@ class _MatchSavedScreenState extends State<MatchSavedScreen> with SingleTickerPr
               ),
               const SizedBox(height: 16),
               Text(
-                'Seasonal standings and ELO\nratings have been updated.',
+                widget.includedGuestPlayers
+                    ? 'Permanent player standings were updated.\nGuest players were saved for this session only.'
+                    : 'Seasonal standings and ELO\nratings have been updated.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8),

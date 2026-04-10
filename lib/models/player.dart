@@ -3,6 +3,8 @@
 /// from match history. Only `lastResult` is stored directly for the
 /// Winners & Losers matching algorithm.
 class Player {
+  static const String guestIdPrefix = 'guest:';
+
   final String? id;
   final String name;
   final String gender; // 'Male' or 'Female'
@@ -18,6 +20,7 @@ class Player {
   final String? clubId;
   final String? ownerUid;
   final bool isLegacy;
+  final bool isGuest;
 
   Player({
     this.id,
@@ -35,7 +38,12 @@ class Player {
     this.clubId,
     this.ownerUid,
     this.isLegacy = false,
+    this.isGuest = false,
   });
+
+  static bool isGuestId(String? playerId) {
+    return playerId?.trim().startsWith(guestIdPrefix) ?? false;
+  }
 
   static String normalizeSkillLevelCode(String skillLevel) {
     switch (skillLevel.trim().toLowerCase()) {
@@ -95,6 +103,7 @@ class Player {
       'clubId': clubId,
       'ownerUid': ownerUid,
       'isLegacy': isLegacy ? 1 : 0,
+      'isGuest': isGuest ? 1 : 0,
     };
   }
 
@@ -115,6 +124,7 @@ class Player {
       clubId: map['clubId'],
       ownerUid: map['ownerUid'],
       isLegacy: (map['isLegacy'] ?? 0) == 1,
+      isGuest: (map['isGuest'] ?? 0) == 1 || isGuestId(map['id'] as String?),
     );
   }
 
@@ -157,6 +167,7 @@ class Player {
     String? clubId,
     String? ownerUid,
     bool? isLegacy,
+    bool? isGuest,
   }) {
     return Player(
       id: id ?? this.id,
@@ -174,6 +185,7 @@ class Player {
       clubId: clubId ?? this.clubId,
       ownerUid: ownerUid ?? this.ownerUid,
       isLegacy: isLegacy ?? this.isLegacy,
+      isGuest: isGuest ?? this.isGuest,
     );
   }
 }

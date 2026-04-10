@@ -22,6 +22,9 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
   String _selectedWinner = 'A';
   bool _isSaving = false;
 
+  bool get _includesGuestPlayers =>
+      widget.match.allPlayers.any((player) => player.isGuest);
+
   String _getLogicLabel(String logic) {
     switch (logic) {
       case 'auto':
@@ -64,7 +67,9 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
           ),
         ),
         content: Text(
-          'Save result with Team $_selectedWinner as the winner?\n\nThis will update each player\'s individual standing.',
+          _includesGuestPlayers
+              ? 'Save result with Team $_selectedWinner as the winner?\n\nPermanent player standings will be updated, and guest players will be logged for this session only.'
+              : 'Save result with Team $_selectedWinner as the winner?\n\nThis will update each player\'s individual standing.',
           style: TextStyle(color: AppColors.textMuted(context)),
         ),
         actions: [
@@ -138,9 +143,12 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
       _isSaving = false;
     });
 
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const MatchSavedScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            MatchSavedScreen(includedGuestPlayers: _includesGuestPlayers),
+      ),
+    );
   }
 
   @override

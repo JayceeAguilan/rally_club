@@ -7,6 +7,7 @@ import 'models/player.dart';
 import 'match_generator.dart';
 import 'responsive.dart';
 import 'auth_provider.dart';
+import 'session_guest_player_store.dart';
 
 class MatchSetupScreen extends StatefulWidget {
   const MatchSetupScreen({super.key});
@@ -20,6 +21,8 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
   String _selectedLogic = 'auto';
   bool _isGenerating = false;
   Future<List<Player>> _playersFuture = Future.value(const <Player>[]);
+  List<Player> _permanentPlayers = const <Player>[];
+  List<Player> _guestPlayers = SessionGuestPlayerStore.instance.players;
 
   @override
   void initState() {
@@ -29,10 +32,176 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
 
   void refreshPlayers() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (!auth.isAdmin) {
+      setState(() {
+        _permanentPlayers = const <Player>[];
+        _playersFuture = Future.value(const <Player>[]);
+      });
+      return;
+    }
+
+    final future = FirebaseService()
+        .getPlayers(clubId: auth.appUser!.clubId!)
+        .then((players) {
+          if (mounted) {
+            setState(() {
+              _permanentPlayers = players;
+            });
+          } else {
+            _permanentPlayers = players;
+          }
+          return players;
+        });
+
     setState(() {
-      _playersFuture = auth.isAdmin
-          ? FirebaseService().getPlayers(clubId: auth.appUser!.clubId!)
-          : Future.value(const <Player>[]);
+      _playersFuture = future;
+    });
+  }
+
+  List<Player> _buildSessionPlayers(List<Player> permanentPlayers) {
+    return [...permanentPlayers, ..._guestPlayers];
+  }
+
+  Future<Map<String, Map<String, int>>?> _loadStandingsMap({
+    required String clubId,
+    required String logic,
+  }) async {
+    if (logic != 'history') {
+      return null;
+    }
+
+    final standings = await FirebaseService().getPlayerStandings(
+      clubId: clubId,
+    );
+    final standingsMap = <String, Map<String, int>>{};
+    for (final standing in standings) {
+      final player = standing['player'] as Player;
+      if (player.id == null) {
+        continue;
+      }
+
+      standingsMap[player.id!] = {
+        'wins': standing['wins'] as int,
+        'losses': standing['losses'] as int,
+      };
+    }
+    return standingsMap;
+  }
+
+  Future<void> _generateMatch({required int delayMilliseconds}) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    setState(() {
+      _isGenerating = true;
+    });
+
+    await Future.delayed(Duration(milliseconds: delayMilliseconds));
+
+    final permanentPlayers = await FirebaseService().getPlayers(
+      clubId: auth.appUser!.clubId!,
+    );
+    final logic = (_selectedLogic == 'mixed' && _selectedMode == 'singles')
+        ? 'auto'
+        : _selectedLogic;
+    final standingsMap = await _loadStandingsMap(
+      clubId: auth.appUser!.clubId!,
+      logic: logic,
+    );
+    final result = MatchGenerator.generate(
+      availablePlayers: _buildSessionPlayers(permanentPlayers),
+      gameMode: _selectedMode,
+      matchLogic: logic,
+      playerStandings: standingsMap,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isGenerating = false;
+      _permanentPlayers = permanentPlayers;
+    });
+
+    if (!result.isSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.error!),
+          backgroundColor: AppColors.textMain(context),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MatchResultScreen(match: result.match!),
+      ),
+    );
+  }
+
+  Future<void> _openGuestPlayerSheet({Player? player}) async {
+    final sessionPlayer = await showModalBottomSheet<Player>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _GuestPlayerSheet(playerToEdit: player),
+    );
+
+    if (sessionPlayer == null || !mounted) {
+      return;
+    }
+
+    final normalizedName = sessionPlayer.name.trim().toLowerCase();
+    final hasDuplicateName = _buildSessionPlayers(_permanentPlayers).any(
+      (existingPlayer) =>
+          existingPlayer.id != sessionPlayer.id &&
+          existingPlayer.name.trim().toLowerCase() == normalizedName,
+    );
+    if (hasDuplicateName) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('That name is already in the current session.'),
+        ),
+      );
+      return;
+    }
+
+    SessionGuestPlayerStore.instance.upsert(sessionPlayer);
+    setState(() {
+      _guestPlayers = SessionGuestPlayerStore.instance.players;
+    });
+  }
+
+  void _toggleGuestAvailability(Player guestPlayer, bool isAvailable) {
+    SessionGuestPlayerStore.instance.upsert(
+      guestPlayer.copyWith(isAvailable: isAvailable),
+    );
+    setState(() {
+      _guestPlayers = SessionGuestPlayerStore.instance.players;
+    });
+  }
+
+  void _removeGuestPlayer(Player guestPlayer) {
+    final playerId = guestPlayer.id;
+    if (playerId == null) {
+      return;
+    }
+
+    SessionGuestPlayerStore.instance.remove(playerId);
+    setState(() {
+      _guestPlayers = SessionGuestPlayerStore.instance.players;
+    });
+  }
+
+  void _clearGuestPlayers() {
+    SessionGuestPlayerStore.instance.clear();
+    setState(() {
+      _guestPlayers = SessionGuestPlayerStore.instance.players;
     });
   }
 
@@ -155,6 +324,11 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                             ],
                             const SizedBox(height: 32),
 
+                            _buildSectionTitle('03', 'Session Guests'),
+                            const SizedBox(height: 16),
+                            _buildGuestPlayerSection(),
+                            const SizedBox(height: 32),
+
                             // Session Summary
                             Container(
                               padding: const EdgeInsets.all(24),
@@ -216,12 +390,14 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                                                   );
                                                 }
                                                 final activeCount =
-                                                    snapshot.data
-                                                        ?.where(
+                                                    _buildSessionPlayers(
+                                                          snapshot.data ??
+                                                              const <Player>[],
+                                                        )
+                                                        .where(
                                                           (p) => p.isAvailable,
                                                         )
-                                                        .length ??
-                                                    0;
+                                                        .length;
                                                 return Text(
                                                   activeCount.toString(),
                                                   style: TextStyle(
@@ -285,7 +461,9 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          '92% CAPACITY REACHED',
+                                          _guestPlayers.isEmpty
+                                              ? 'INCLUDING PERMANENT ROSTER'
+                                              : 'INCLUDING ${_guestPlayers.where((player) => player.isAvailable).length} ACTIVE GUEST${_guestPlayers.where((player) => player.isAvailable).length == 1 ? '' : 'S'}',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
@@ -302,111 +480,9 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                                     child: ElevatedButton.icon(
                                       onPressed: _isGenerating
                                           ? null
-                                          : () async {
-                                              final auth =
-                                                  Provider.of<AuthProvider>(
-                                                    context,
-                                                    listen: false,
-                                                  );
-                                              setState(() {
-                                                _isGenerating = true;
-                                              });
-
-                                              await Future.delayed(
-                                                const Duration(
-                                                  milliseconds: 1200,
-                                                ),
-                                              );
-                                              final allPlayers =
-                                                  await FirebaseService()
-                                                      .getPlayers(
-                                                        clubId: auth
-                                                            .appUser!
-                                                            .clubId!,
-                                                      );
-
-                                              final logic =
-                                                  (_selectedLogic == 'mixed' &&
-                                                      _selectedMode ==
-                                                          'singles')
-                                                  ? 'auto'
-                                                  : _selectedLogic;
-
-                                              Map<String, Map<String, int>>?
-                                              standingsMap;
-                                              if (logic == 'history') {
-                                                final standings =
-                                                    await FirebaseService()
-                                                        .getPlayerStandings(
-                                                          clubId: auth
-                                                              .appUser!
-                                                              .clubId!,
-                                                        );
-                                                standingsMap = {};
-                                                for (final s in standings) {
-                                                  final player =
-                                                      s['player'] as Player;
-                                                  if (player.id != null) {
-                                                    standingsMap[player.id!] = {
-                                                      'wins': s['wins'] as int,
-                                                      'losses':
-                                                          s['losses'] as int,
-                                                    };
-                                                  }
-                                                }
-                                              }
-
-                                              final result =
-                                                  MatchGenerator.generate(
-                                                    availablePlayers:
-                                                        allPlayers,
-                                                    gameMode: _selectedMode,
-                                                    matchLogic: logic,
-                                                    playerStandings:
-                                                        standingsMap,
-                                                  );
-
-                                              if (!context.mounted) return;
-
-                                              setState(() {
-                                                _isGenerating = false;
-                                              });
-
-                                              if (!result.isSuccess) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      result.error!,
-                                                    ),
-                                                    backgroundColor:
-                                                        AppColors.textMain(
-                                                          context,
-                                                        ),
-                                                    behavior: SnackBarBehavior
-                                                        .floating,
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            12,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                );
-                                                return;
-                                              }
-
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      MatchResultScreen(
-                                                        match: result.match!,
-                                                      ),
-                                                ),
-                                              );
-                                            },
+                                          : () => _generateMatch(
+                                              delayMilliseconds: 1200,
+                                            ),
                                       icon: _isGenerating
                                           ? const SizedBox(
                                               width: 24,
@@ -460,99 +536,9 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                                         child: TextButton.icon(
                                           onPressed: _isGenerating
                                               ? null
-                                              : () async {
-                                                  final auth =
-                                                      Provider.of<AuthProvider>(
-                                                        context,
-                                                        listen: false,
-                                                      );
-                                                  setState(() {
-                                                    _isGenerating = true;
-                                                  });
-                                                  await Future.delayed(
-                                                    const Duration(
-                                                      milliseconds: 800,
-                                                    ),
-                                                  );
-                                                  final players =
-                                                      await FirebaseService()
-                                                          .getPlayers(
-                                                            clubId: auth
-                                                                .appUser!
-                                                                .clubId!,
-                                                          );
-                                                  final available = players
-                                                      .where(
-                                                        (p) => p.isAvailable,
-                                                      )
-                                                      .toList();
-                                                  Map<String, Map<String, int>>?
-                                                  standings;
-                                                  if (_selectedLogic ==
-                                                      'history') {
-                                                    final standingsList =
-                                                        await FirebaseService()
-                                                            .getPlayerStandings(
-                                                              clubId: auth
-                                                                  .appUser!
-                                                                  .clubId!,
-                                                            );
-                                                    standings = {};
-                                                    for (final s
-                                                        in standingsList) {
-                                                      final p =
-                                                          s['player'] as Player;
-                                                      if (p.id != null) {
-                                                        standings[p.id!] = {
-                                                          'wins':
-                                                              s['wins'] as int,
-                                                          'losses':
-                                                              s['losses']
-                                                                  as int,
-                                                        };
-                                                      }
-                                                    }
-                                                  }
-                                                  final result =
-                                                      MatchGenerator.generate(
-                                                        gameMode: _selectedMode,
-                                                        matchLogic:
-                                                            _selectedLogic,
-                                                        availablePlayers:
-                                                            available,
-                                                        playerStandings:
-                                                            standings,
-                                                      );
-
-                                                  setState(() {
-                                                    _isGenerating = false;
-                                                  });
-
-                                                  if (!context.mounted) return;
-                                                  if (!result.isSuccess) {
-                                                    ScaffoldMessenger.of(
-                                                      context,
-                                                    ).showSnackBar(
-                                                      SnackBar(
-                                                        content: Text(
-                                                          result.error ??
-                                                              'Error',
-                                                        ),
-                                                      ),
-                                                    );
-                                                    return;
-                                                  }
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          MatchResultScreen(
-                                                            match:
-                                                                result.match!,
-                                                          ),
-                                                    ),
-                                                  );
-                                                },
+                                              : () => _generateMatch(
+                                                  delayMilliseconds: 800,
+                                                ),
                                           icon: const Icon(
                                             Icons.refresh,
                                             size: 16,
@@ -955,6 +941,474 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGuestPlayerSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh(context),
+        borderRadius: BorderRadius.circular(32),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Temporary guest players stay only in the active session and never create a permanent account.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: AppColors.textMuted(context),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${_guestPlayers.length} guest${_guestPlayers.length == 1 ? '' : 's'} ready',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.3,
+                        color: AppColors.primary(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              FilledButton.icon(
+                onPressed: () => _openGuestPlayerSheet(),
+                icon: const Icon(Icons.person_add_alt_1, size: 18),
+                label: const Text('Add Guest'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary(context),
+                  foregroundColor: AppColors.onPrimary(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (_guestPlayers.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.surface(context),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'No guest players added yet. Use this when someone is joining today without a permanent Rally Club account.',
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.4,
+                  color: AppColors.textMuted(context),
+                ),
+              ),
+            )
+          else ...[
+            for (final guestPlayer in _guestPlayers) ...[
+              _buildGuestPlayerCard(guestPlayer),
+              const SizedBox(height: 12),
+            ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _clearGuestPlayers,
+                icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                label: const Text('Clear Session Guests'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGuestPlayerCard(Player guestPlayer) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => _openGuestPlayerSheet(player: guestPlayer),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.surface(context),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border(context)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.primary(context).withValues(alpha: 0.16),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.person_outline,
+                color: AppColors.primary(context),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          guestPlayer.name,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textMain(context),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary(context),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'GUEST',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.1,
+                            color: AppColors.onPrimary(context),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildGuestMetaChip(guestPlayer.gender),
+                      _buildGuestMetaChip(guestPlayer.displaySkillLabel),
+                      _buildGuestMetaChip(
+                        guestPlayer.isAvailable ? 'Available' : 'Bench',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SwitchListTile.adaptive(
+                          value: guestPlayer.isAvailable,
+                          onChanged: (value) =>
+                              _toggleGuestAvailability(guestPlayer, value),
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text(
+                            'Available for matching',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textMuted(context),
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Edit guest',
+                        onPressed: () =>
+                            _openGuestPlayerSheet(player: guestPlayer),
+                        icon: const Icon(Icons.edit_outlined),
+                      ),
+                      IconButton(
+                        tooltip: 'Remove guest',
+                        onPressed: () => _removeGuestPlayer(guestPlayer),
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGuestMetaChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh(context),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.0,
+          color: AppColors.textMuted(context),
+        ),
+      ),
+    );
+  }
+}
+
+class _GuestPlayerSheet extends StatefulWidget {
+  final Player? playerToEdit;
+
+  const _GuestPlayerSheet({this.playerToEdit});
+
+  @override
+  State<_GuestPlayerSheet> createState() => _GuestPlayerSheetState();
+}
+
+class _GuestPlayerSheetState extends State<_GuestPlayerSheet> {
+  final TextEditingController _nameController = TextEditingController();
+  String _selectedGender = 'Male';
+  String _selectedSkill = 'Intermediate';
+  bool _isAvailable = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final player = widget.playerToEdit;
+    if (player == null) {
+      return;
+    }
+
+    _nameController.text = player.name;
+    _selectedGender = player.gender;
+    _selectedSkill = Player.displaySkillLevel(player.skillLevel);
+    _isAvailable = player.isAvailable;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _saveGuestPlayer() {
+    final trimmedName = _nameController.text.trim();
+    if (trimmedName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Guest player name is required.')),
+      );
+      return;
+    }
+
+    final existingPlayer = widget.playerToEdit;
+    final guestPlayer =
+        (existingPlayer ??
+                Player(
+                  id: SessionGuestPlayerStore.instance.createGuestId(),
+                  name: trimmedName,
+                  gender: _selectedGender,
+                  skillLevel: Player.normalizeSkillLevelCode(_selectedSkill),
+                  isAvailable: _isAvailable,
+                  isGuest: true,
+                ))
+            .copyWith(
+              name: trimmedName,
+              gender: _selectedGender,
+              skillLevel: Player.normalizeSkillLevelCode(_selectedSkill),
+              isAvailable: _isAvailable,
+              isGuest: true,
+              countsAsPlayer: true,
+              notes: 'Session guest',
+            );
+
+    Navigator.pop(context, guestPlayer);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      margin: EdgeInsets.only(top: kToolbarHeight),
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(40),
+          topRight: Radius.circular(40),
+        ),
+      ),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(24, 28, 24, 24 + bottomInset),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.playerToEdit == null
+                            ? 'SESSION GUEST'
+                            : 'EDIT SESSION GUEST',
+                        style: TextStyle(
+                          color: AppColors.primary(context),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        widget.playerToEdit == null
+                            ? 'Add Temporary Player'
+                            : 'Update Temporary Player',
+                        style: TextStyle(
+                          color: AppColors.textMain(context),
+                          fontSize: 30,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.8,
+                          height: 1.05,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.close, color: AppColors.textMuted(context)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Guest players are available for match generation right away, but they do not create permanent accounts or roster entries.',
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: AppColors.textMuted(context),
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _nameController,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                labelText: 'Guest name',
+                filled: true,
+                fillColor: AppColors.divider(context),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Gender',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.4,
+                color: AppColors.textMuted(context),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 10,
+              children: [
+                for (final gender in const ['Male', 'Female'])
+                  ChoiceChip(
+                    label: Text(gender),
+                    selected: _selectedGender == gender,
+                    onSelected: (_) {
+                      setState(() {
+                        _selectedGender = gender;
+                      });
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Skill level',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.4,
+                color: AppColors.textMuted(context),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final skill in const [
+                  'Beginner',
+                  'Intermediate',
+                  'Advanced',
+                ])
+                  ChoiceChip(
+                    label: Text(skill),
+                    selected: _selectedSkill == skill,
+                    onSelected: (_) {
+                      setState(() {
+                        _selectedSkill = skill;
+                      });
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SwitchListTile.adaptive(
+              value: _isAvailable,
+              onChanged: (value) {
+                setState(() {
+                  _isAvailable = value;
+                });
+              },
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Available immediately for match generation'),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _saveGuestPlayer,
+                icon: const Icon(Icons.check_circle_outline),
+                label: Text(
+                  widget.playerToEdit == null
+                      ? 'Add Guest Player'
+                      : 'Save Guest Player',
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary(context),
+                  foregroundColor: AppColors.onPrimary(context),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                ),
               ),
             ),
           ],

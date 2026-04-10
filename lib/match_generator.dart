@@ -13,6 +13,8 @@ class GeneratedMatch {
     required this.gameMode,
     required this.matchLogic,
   });
+
+  List<Player> get allPlayers => [...teamA, ...teamB];
 }
 
 /// Result wrapper that includes validation info.
