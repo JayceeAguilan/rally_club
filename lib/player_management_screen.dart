@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'main.dart';
-import 'match_history_screen.dart';
 import 'add_new_player_sheet.dart';
 import 'firebase_service.dart';
 import 'models/player.dart';
+import 'player_match_history_screen.dart';
 import 'responsive.dart';
 import 'auth_provider.dart';
 
@@ -724,7 +724,9 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MatchHistoryScreen()),
+          MaterialPageRoute(
+            builder: (context) => PlayerMatchHistoryScreen(player: player),
+          ),
         );
       },
       borderRadius: BorderRadius.circular(24),
@@ -984,7 +986,7 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'MY HISTORY',
+                    isOwnProfile ? 'MY HISTORY' : 'VIEW HISTORY',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
