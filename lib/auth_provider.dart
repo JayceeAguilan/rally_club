@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'models/app_user.dart';
 import 'models/club.dart';
 import 'models/player.dart';
@@ -9,19 +10,26 @@ import 'firebase_service.dart';
 import 'notification_service.dart';
 
 class AuthProvider extends ChangeNotifier {
+  static const rememberMePreferenceKey = 'auth.rememberMe';
+
   late final FirebaseAuth _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final Future<SharedPreferences> Function() _loadPreferences;
+  final Completer<void> _sessionPreferenceReady = Completer<void>();
 
   User? _firebaseUser;
   AppUser? _appUser;
   Club? _club;
   bool _isLoading = true;
+  bool _rememberMe = true;
   bool? _isAuthenticatedOverride;
   bool? _isEmailVerifiedOverride;
   StreamSubscription<User?>? _authSub;
 
-  AuthProvider() {
+  AuthProvider({Future<SharedPreferences> Function()? loadPreferences})
+    : _loadPreferences = loadPreferences ?? SharedPreferences.getInstance {
     _authSub = _auth.authStateChanges().listen(_onAuthStateChanged);
+    unawaited(_initializeSessionPreference());
   }
 
   /// Test-only constructor: pre-sets auth state without Firebase access.
@@ -30,20 +38,24 @@ class AuthProvider extends ChangeNotifier {
     AppUser? appUser,
     Club? club,
     bool isLoading = false,
+    bool rememberMe = true,
     bool? isAuthenticated,
     bool? isEmailVerified,
-  }) {
+  }) : _loadPreferences = SharedPreferences.getInstance {
     _appUser = appUser;
     _club = club;
     _isLoading = isLoading;
+    _rememberMe = rememberMe;
     _isAuthenticatedOverride = isAuthenticated ?? appUser != null;
     _isEmailVerifiedOverride = isEmailVerified ?? appUser != null;
+    _sessionPreferenceReady.complete();
   }
 
   User? get firebaseUser => _firebaseUser;
   AppUser? get appUser => _appUser;
   Club? get club => _club;
   bool get isLoading => _isLoading;
+  bool get rememberMe => _rememberMe;
   bool get isAuthenticated =>
       (_firebaseUser != null || (_isAuthenticatedOverride ?? false)) &&
       _appUser != null;
@@ -202,7 +214,39 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _onAuthStateChanged(User? user) async {
+  Future<void> _initializeSessionPreference() async {
+    try {
+      final prefs = await _loadPreferences();
+      _rememberMe = prefs.getBool(rememberMePreferenceKey) ?? true;
+
+      if (_auth.currentUser != null && !_rememberMe) {
+        await _auth.signOut();
+      }
+    } catch (e) {
+      debugPrint('AuthProvider: failed to initialize remember me: $e');
+      _rememberMe = true;
+    } finally {
+      if (!_sessionPreferenceReady.isCompleted) {
+        _sessionPreferenceReady.complete();
+      }
+    }
+  }
+
+  Future<void> _persistRememberMePreference(bool rememberMe) async {
+    _rememberMe = rememberMe;
+
+    try {
+      final prefs = await _loadPreferences();
+      await prefs.setBool(rememberMePreferenceKey, rememberMe);
+    } catch (e) {
+      debugPrint('AuthProvider: failed to save remember me: $e');
+    }
+  }
+
+  Future<void> _onAuthStateChanged(User? _) async {
+    await _sessionPreferenceReady.future;
+
+    final user = _auth.currentUser;
     _firebaseUser = user;
     if (user == null) {
       await _clearAnnouncementNotifications();
@@ -271,7 +315,16 @@ class AuthProvider extends ChangeNotifier {
   Future<UserCredential> signIn({
     required String email,
     required String password,
+    bool rememberMe = true,
   }) async {
+    await _persistRememberMePreference(rememberMe);
+
+    if (kIsWeb) {
+      await _auth.setPersistence(
+        rememberMe ? Persistence.LOCAL : Persistence.SESSION,
+      );
+    }
+
     return _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
@@ -283,6 +336,12 @@ class AuthProvider extends ChangeNotifier {
     required String skillLevel,
   }) async {
     UserCredential? cred;
+
+    await _persistRememberMePreference(true);
+
+    if (kIsWeb) {
+      await _auth.setPersistence(Persistence.LOCAL);
+    }
 
     try {
       cred = await _auth.createUserWithEmailAndPassword(

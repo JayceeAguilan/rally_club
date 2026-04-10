@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isSubmitting = false;
+  bool _rememberMe = true;
   String? _errorMessage;
 
   // -- Color system (matches register screen) --
@@ -32,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    _rememberMe = context.read<AuthProvider>().rememberMe;
     _emailController.addListener(_clearErrorFeedbackOnInput);
     _passwordController.addListener(_clearErrorFeedbackOnInput);
   }
@@ -55,6 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await context.read<AuthProvider>().signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        rememberMe: _rememberMe,
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -242,6 +245,38 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
                               return null;
                             },
+                          ),
+                          const SizedBox(height: 8),
+
+                          CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            value: _rememberMe,
+                            activeColor: _lime,
+                            checkColor: _limeDark,
+                            onChanged: _isSubmitting
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _rememberMe = value ?? true;
+                                    });
+                                  },
+                            title: const Text(
+                              'Remember me',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: _textPrimary,
+                              ),
+                            ),
+                            subtitle: const Text(
+                              'Keep me signed in on this device.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _textSecondary,
+                              ),
+                            ),
                           ),
 
                           // Error message

@@ -18,8 +18,30 @@ class _FailingAuthProvider extends AuthProvider {
   Future<UserCredential> signIn({
     required String email,
     required String password,
+    bool rememberMe = true,
   }) async {
     throw exception;
+  }
+}
+
+class _CapturingAuthProvider extends AuthProvider {
+  _CapturingAuthProvider({super.rememberMe = true})
+    : super.test(isLoading: false);
+
+  bool? lastRememberMe;
+  String? lastEmail;
+  String? lastPassword;
+
+  @override
+  Future<UserCredential> signIn({
+    required String email,
+    required String password,
+    bool rememberMe = true,
+  }) async {
+    lastEmail = email;
+    lastPassword = password;
+    lastRememberMe = rememberMe;
+    throw Exception('captured sign in');
   }
 }
 
@@ -107,5 +129,47 @@ void main() {
       find.text('Incorrect email or password. Please try again.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('remember me checkbox reflects saved preference', (tester) async {
+    tester.view.physicalSize = const Size(1080, 1920);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final auth = _CapturingAuthProvider(rememberMe: false);
+
+    await tester.pumpWidget(_buildTestWidget(auth));
+    await tester.pumpAndSettle();
+
+    final checkbox = tester.widget<Checkbox>(find.byType(Checkbox));
+    expect(checkbox.value, isFalse);
+    expect(find.text('Remember me'), findsOneWidget);
+  });
+
+  testWidgets('sign in forwards remember me preference', (tester) async {
+    tester.view.physicalSize = const Size(1080, 1920);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final auth = _CapturingAuthProvider();
+
+    await tester.pumpWidget(_buildTestWidget(auth));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Remember me'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextFormField).at(0),
+      'member@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(1), 'secure-password');
+
+    await tester.tap(find.text('SIGN IN'));
+    await tester.pumpAndSettle();
+
+    expect(auth.lastEmail, 'member@example.com');
+    expect(auth.lastPassword, 'secure-password');
+    expect(auth.lastRememberMe, isFalse);
   });
 }
