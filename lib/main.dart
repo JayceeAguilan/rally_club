@@ -328,15 +328,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     ),
                   ],
                 ),
-                Text(
-                  'ELITE MANAGEMENT',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 2.0,
-                    color: AppColors.textMuted(context),
-                  ),
-                ),
+                
               ],
             ),
           ),
