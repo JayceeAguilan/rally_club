@@ -460,40 +460,7 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                        ] else ...[
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerHigh(context),
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'PROFILE',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.5,
-                                    color: AppColors.textMuted(context),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Manage your own player details and availability here.',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textMain(context),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
+                        ] else ...[],
 
                         // Player List from Local Database
                         FutureBuilder<List<Player>>(
