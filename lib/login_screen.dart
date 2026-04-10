@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'auth_provider.dart';
 import 'register_screen.dart';
@@ -416,11 +415,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                       width: 22,
                                       height: 22,
                                       alignment: Alignment.center,
-                                      child: SvgPicture.asset(
-                                        'lib/assets/image/google_logo.svg',
+                                      child: Image.asset(
+                                        'lib/assets/image/google_logo.png',
                                         key: const Key('google-login-logo'),
                                         width: 22,
                                         height: 22,
+                                        filterQuality: FilterQuality.high,
                                       ),
                                     ),
                                     const SizedBox(width: 10),
