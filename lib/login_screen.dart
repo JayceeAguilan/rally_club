@@ -1,11 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'auth_provider.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.showGoogleSignIn = kIsWeb});
+
+  final bool showGoogleSignIn;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -79,6 +82,14 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _errorMessage = null;
     });
+  }
+
+  void _showGoogleComingSoon() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Google sign-in for web is coming soon.'),
+      ),
+    );
   }
 
   String _friendlyAuthError(FirebaseAuthException error) {
@@ -353,6 +364,90 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                             ),
                           ),
+
+                          if (widget.showGoogleSignIn) ...[
+                            const SizedBox(height: 18),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(
+                                    color: _inputBorder.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                  child: Text(
+                                    'OR',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: _textSecondary,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(
+                                    color: _inputBorder.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            SizedBox(
+                              height: 52,
+                              child: OutlinedButton(
+                                onPressed: _isSubmitting
+                                    ? null
+                                    : _showGoogleComingSoon,
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: _inputBorder),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  backgroundColor: Colors.white,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      width: 22,
+                                      height: 22,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF1F3F4),
+                                        borderRadius: BorderRadius.circular(11),
+                                      ),
+                                      child: const Text(
+                                        'G',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w900,
+                                          color: Color(0xFF4285F4),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Flexible(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          'CONTINUE WITH GOOGLE',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.4,
+                                            color: _textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

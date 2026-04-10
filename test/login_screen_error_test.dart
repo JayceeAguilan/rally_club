@@ -52,6 +52,13 @@ Widget _buildTestWidget(AuthProvider auth) {
   );
 }
 
+Widget _buildGoogleUiTestWidget(AuthProvider auth) {
+  return ChangeNotifierProvider<AuthProvider>.value(
+    value: auth,
+    child: const MaterialApp(home: LoginScreen(showGoogleSignIn: true)),
+  );
+}
+
 Widget _buildAuthGateTestWidget(AuthProvider auth) {
   return ChangeNotifierProvider<AuthProvider>.value(
     value: auth,
@@ -171,5 +178,25 @@ void main() {
     expect(auth.lastEmail, 'member@example.com');
     expect(auth.lastPassword, 'secure-password');
     expect(auth.lastRememberMe, isFalse);
+  });
+
+  testWidgets('web google sign-in button is shown as UI-only placeholder', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 1920);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final auth = _CapturingAuthProvider();
+
+    await tester.pumpWidget(_buildGoogleUiTestWidget(auth));
+    await tester.pumpAndSettle();
+
+    expect(find.text('CONTINUE WITH GOOGLE'), findsOneWidget);
+
+    await tester.tap(find.text('CONTINUE WITH GOOGLE'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Google sign-in for web is coming soon.'), findsOneWidget);
   });
 }
