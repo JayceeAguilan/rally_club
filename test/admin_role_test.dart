@@ -114,6 +114,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Save Result'), findsNothing);
+      expect(find.text('Select a Winner First'), findsNothing);
     });
 
     testWidgets('admin can access match result screen actions', (tester) async {
@@ -131,7 +132,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Admin Access Required'), findsNothing);
-      expect(find.text('Save Result'), findsOneWidget);
+      expect(find.text('Select a Winner First'), findsOneWidget);
     });
   });
 }

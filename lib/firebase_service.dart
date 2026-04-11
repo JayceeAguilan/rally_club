@@ -339,18 +339,6 @@ class FirebaseService {
     return nextPlayers;
   }
 
-  List<MatchRecord> _replaceMatchInSnapshot(
-    List<MatchRecord> matches,
-    MatchRecord updated,
-  ) {
-    final nextMatches = matches
-        .where((match) => match.id != updated.id)
-        .toList();
-    nextMatches.add(updated);
-    nextMatches.sort((left, right) => right.date.compareTo(left.date));
-    return nextMatches;
-  }
-
   Future<List<Player>> _loadPlayersForWrite({required String clubId}) async {
     try {
       return await _fetchRemotePlayersSnapshot(clubId: clubId);
@@ -890,10 +878,9 @@ class FirebaseService {
 
       await batch.commit();
 
-      final cachedMatches = await _readCachedMatchesSnapshot(clubId: clubId);
       await _cacheMatchesSnapshot(
         clubId: clubId,
-        matches: _replaceMatchInSnapshot(cachedMatches, storedMatch),
+        matches: [...matches, storedMatch],
       );
 
       final teamAIdsSet = teamAIds.toSet();

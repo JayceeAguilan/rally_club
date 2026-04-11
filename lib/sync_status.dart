@@ -67,6 +67,15 @@ class SyncStatusController extends ChangeNotifier {
     }
   }
 
+  @override
+  void dispose() {
+    unawaited(_connectivitySubscription?.cancel());
+    unawaited(_snapshotsInSyncSubscription?.cancel());
+    _connectivitySubscription = null;
+    _snapshotsInSyncSubscription = null;
+    super.dispose();
+  }
+
   Future<void> _initialize() async {
     await _loadInitialConnectivity();
 

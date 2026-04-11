@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
+import 'active_match_controller.dart';
 import 'player_management_screen.dart';
 import 'announcements_screen.dart';
+import 'match_generator.dart';
+import 'match_result_screen.dart';
+import 'match_saved_screen.dart';
 import 'match_setup_screen.dart';
 import 'standings_screen.dart';
 import 'match_history_screen.dart';
@@ -73,6 +77,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ActiveMatchController()),
         ChangeNotifierProvider<SyncStatusController>.value(
           value: SyncStatusController.instance,
         ),
@@ -219,9 +224,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   void _selectIndex(int index) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
+    final activeMatchController = context.read<ActiveMatchController>();
     if (!auth.isAdmin && index == 2) {
       setState(() => _currentIndex = 0);
       return;
+    }
+
+    if (activeMatchController.isExpanded) {
+      activeMatchController.minimize();
     }
 
     final enteredAnnouncements =
@@ -263,9 +273,67 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
   }
 
+  void _openMatchWorkspace({String? mode, bool resumeActiveMatch = false}) {
+    final activeMatchController = context.read<ActiveMatchController>();
+    final shouldResume =
+        resumeActiveMatch && activeMatchController.hasActiveMatch;
+
+    if (mode != null && !shouldResume) {
+      matchSetupKey.currentState?.setGameMode(mode);
+    }
+
+    matchSetupKey.currentState?.refreshPlayers();
+    setState(() {
+      _currentIndex = 2;
+    });
+
+    if (shouldResume) {
+      activeMatchController.expand();
+    }
+  }
+
+  void _handleActiveMatchSaved(bool includedGuestPlayers) {
+    context.read<ActiveMatchController>().clear();
+    dashboardKey.currentState?.refreshDashboardData();
+    matchSetupKey.currentState?.refreshPlayers();
+    standingsKey.currentState?.refreshStandings();
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            MatchSavedScreen(includedGuestPlayers: includedGuestPlayers),
+      ),
+    );
+  }
+
+  void _handleActiveMatchReshuffle() {
+    context.read<ActiveMatchController>().clear();
+    matchSetupKey.currentState?.refreshPlayers();
+    setState(() {
+      _currentIndex = 2;
+    });
+  }
+
+  void _handleActiveMatchCancelled() {
+    context.read<ActiveMatchController>().clear();
+    matchSetupKey.currentState?.refreshPlayers();
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('The ongoing match was canceled.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAdmin = context.select<AuthProvider, bool>((auth) => auth.isAdmin);
+    final activeMatchController = context.watch<ActiveMatchController>();
+    final activeMatch = activeMatchController.activeMatch;
     final profileNavLabel = isAdmin ? 'Players' : 'My Profile';
 
     if (!isAdmin && _currentIndex == 2) {
@@ -278,9 +346,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         announcementInboxStatus: _announcementInboxStatus,
         onNewMatchTap: (mode) {
           if (!isAdmin) return;
-          matchSetupKey.currentState?.setGameMode(mode);
-          matchSetupKey.currentState?.refreshPlayers();
-          setState(() => _currentIndex = 2);
+          _openMatchWorkspace(
+            mode: mode,
+            resumeActiveMatch: activeMatchController.hasActiveMatch,
+          );
         },
         onAnnouncementsTap: () => _selectIndex(announcementsTabIndex),
       ),
@@ -360,7 +429,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           if (isAdmin) ...[
             ElevatedButton.icon(
               onPressed: () {
-                _selectIndex(2);
+                _openMatchWorkspace(
+                  resumeActiveMatch: activeMatchController.hasActiveMatch,
+                );
                 if (mainScaffoldKey.currentState?.isDrawerOpen ?? false) {
                   mainScaffoldKey.currentState?.closeDrawer();
                 }
@@ -397,6 +468,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: InkWell(
               onTap: () {
+                context.read<ActiveMatchController>().clear();
                 Provider.of<AuthProvider>(context, listen: false).signOut();
               },
               borderRadius: BorderRadius.circular(8),
@@ -483,7 +555,48 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       drawer: isDesktop ? null : Drawer(child: sidebar),
       extendBody: !isDesktop,
       backgroundColor: AppColors.background(context),
-      body: content,
+      body: Stack(
+        children: [
+          content,
+          if (activeMatch != null)
+            Positioned.fill(
+              child: Offstage(
+                offstage: !activeMatchController.isExpanded,
+                child: MatchResultScreen(
+                  key: ValueKey(activeMatchController.sessionId),
+                  match: activeMatch,
+                  initialSelectedWinner: activeMatchController.selectedWinner,
+                  initialHasExplicitWinner:
+                      activeMatchController.hasExplicitWinner,
+                  onMinimize: activeMatchController.minimize,
+                  onReshuffle: _handleActiveMatchReshuffle,
+                  onCancelMatch: _handleActiveMatchCancelled,
+                  onSelectedWinnerChanged:
+                      activeMatchController.setSelectedWinner,
+                  onMatchSaved: _handleActiveMatchSaved,
+                ),
+              ),
+            ),
+          if (activeMatch != null && !activeMatchController.isExpanded)
+            Positioned(
+              left: isDesktop ? null : 16,
+              right: 16,
+              bottom: isDesktop ? 24 : 104,
+              child: Align(
+                alignment: isDesktop
+                    ? Alignment.bottomRight
+                    : Alignment.bottomCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: ActiveMatchMinimizedCard(
+                    match: activeMatch,
+                    onResume: activeMatchController.expand,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
       bottomNavigationBar: isDesktop
           ? null
           : Padding(
@@ -720,6 +833,116 @@ class TopNavbarSyncStatusIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SyncStatusBadge(compact: true);
+  }
+}
+
+class ActiveMatchMinimizedCard extends StatelessWidget {
+  const ActiveMatchMinimizedCard({
+    super.key,
+    required this.match,
+    required this.onResume,
+  });
+
+  final GeneratedMatch match;
+  final VoidCallback onResume;
+
+  String _teamSummary(List<Player> team) {
+    return team.map((player) => player.name.split(' ').first).join(' • ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onResume,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface(context),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.border(context)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer(context),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.sports_tennis,
+                  color: AppColors.onPrimaryContainer(context),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Active match in progress',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textMain(context),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${match.gameMode.toUpperCase()} • ${match.matchLogic.toUpperCase()}',
+                      style: TextStyle(
+                        color: AppColors.textMuted(context),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${_teamSummary(match.teamA)} vs ${_teamSummary(match.teamB)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textSub(context),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: onResume,
+                icon: const Icon(Icons.open_in_full_rounded, size: 18),
+                label: const Text('Resume'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primaryContainer(context),
+                  foregroundColor: AppColors.onPrimaryContainer(context),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

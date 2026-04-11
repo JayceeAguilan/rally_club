@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'active_match_controller.dart';
 import 'main.dart';
 import 'match_result_screen.dart';
 import 'firebase_service.dart';
@@ -23,6 +24,14 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
   bool _isGenerating = false;
   Future<List<Player>> _playersFuture = Future.value(const <Player>[]);
   List<Player> _guestPlayers = SessionGuestPlayerStore.instance.players;
+
+  ActiveMatchController? _maybeActiveMatchController({bool listen = false}) {
+    try {
+      return Provider.of<ActiveMatchController>(context, listen: listen);
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
 
   @override
   void initState() {
@@ -147,6 +156,31 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
 
   Future<void> _generateMatch({required int delayMilliseconds}) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
+    final activeMatchController = _maybeActiveMatchController();
+
+    if (activeMatchController?.isRestoring ?? false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Restoring the previous ongoing match. Please wait.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (activeMatchController?.hasActiveMatch ?? false) {
+      activeMatchController?.expand();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'An active match is already in progress. Resume or save it before creating another one.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isGenerating = true;
     });
@@ -192,12 +226,20 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MatchResultScreen(match: result.match!),
-      ),
-    );
+    activeMatchController?.startMatch(result.match!);
+
+    if (activeMatchController == null) {
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MatchResultScreen(match: result.match!),
+        ),
+      );
+    }
   }
 
   Future<void> _openGuestPlayerSheet({Player? player}) async {
@@ -297,6 +339,9 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final isAdmin = context.select<AuthProvider, bool>((auth) => auth.isAdmin);
+    final activeMatchController = _maybeActiveMatchController(listen: true);
+    final hasActiveMatch = activeMatchController?.hasActiveMatch ?? false;
+    final isRestoringActiveMatch = activeMatchController?.isRestoring ?? false;
 
     return Scaffold(
       backgroundColor: AppColors.background(context),
@@ -559,36 +604,131 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                                   ),
                                   const SizedBox(height: 24),
 
+                                  if (isRestoringActiveMatch) ...[
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface(context),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: AppColors.border(context),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.5,
+                                              color: AppColors.primary(context),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              'Restoring your ongoing match from the previous session...',
+                                              style: TextStyle(
+                                                color: AppColors.textMain(
+                                                  context,
+                                                ),
+                                                fontWeight: FontWeight.w700,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                  ] else if (hasActiveMatch) ...[
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface(context),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: AppColors.border(context),
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.lock_clock_outlined,
+                                                color: AppColors.primary(
+                                                  context,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(
+                                                  'Active match in progress',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: AppColors.textMain(
+                                                      context,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'You can navigate anywhere in the app, but you must finish or save the current match before generating a new one.',
+                                            style: TextStyle(
+                                              color: AppColors.textMuted(
+                                                context,
+                                              ),
+                                              fontWeight: FontWeight.w600,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 14),
+                                          FilledButton.icon(
+                                            onPressed:
+                                                activeMatchController!.expand,
+                                            icon: const Icon(
+                                              Icons.open_in_full_rounded,
+                                            ),
+                                            label: const Text(
+                                              'Resume Active Match',
+                                            ),
+                                            style: FilledButton.styleFrom(
+                                              backgroundColor:
+                                                  AppColors.primaryContainer(
+                                                    context,
+                                                  ),
+                                              foregroundColor:
+                                                  AppColors.onPrimaryContainer(
+                                                    context,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                  ],
+
                                   SizedBox(
                                     width: double.infinity,
-                                    child: ElevatedButton.icon(
+                                    child: ElevatedButton(
                                       onPressed: _isGenerating
                                           ? null
+                                          : isRestoringActiveMatch
+                                          ? null
+                                          : hasActiveMatch
+                                          ? activeMatchController!.expand
                                           : () => _generateMatch(
                                               delayMilliseconds: 1200,
-                                            ),
-                                      icon: _isGenerating
-                                          ? const SizedBox(
-                                              width: 24,
-                                              height: 24,
-                                              child: CircularProgressIndicator(
-                                                color: Color(0xFF4A5E00),
-                                                strokeWidth: 3,
-                                              ),
-                                            )
-                                          : const Text(
-                                              'Generate Match',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w900,
-                                                color: Color(0xFF4A5E00),
-                                              ),
-                                            ),
-                                      label: _isGenerating
-                                          ? const SizedBox.shrink()
-                                          : const Icon(
-                                              Icons.bolt,
-                                              color: Color(0xFF4A5E00),
                                             ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(
@@ -610,6 +750,46 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                                           ),
                                         ),
                                       ),
+                                      child: _isGenerating
+                                          ? const SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                color: Color(0xFF4A5E00),
+                                                strokeWidth: 3,
+                                              ),
+                                            )
+                                          : Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  isRestoringActiveMatch
+                                                      ? 'Restoring Match...'
+                                                      : hasActiveMatch
+                                                      ? 'Resume Active Match'
+                                                      : 'Generate Match',
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: Color(0xFF4A5E00),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Icon(
+                                                  isRestoringActiveMatch
+                                                      ? Icons.restore_rounded
+                                                      : hasActiveMatch
+                                                      ? Icons
+                                                            .open_in_full_rounded
+                                                      : Icons.bolt,
+                                                  color: const Color(
+                                                    0xFF4A5E00,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                     ),
                                   ),
                                   const SizedBox(height: 12),
@@ -620,15 +800,25 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                                         child: TextButton.icon(
                                           onPressed: _isGenerating
                                               ? null
+                                              : isRestoringActiveMatch
+                                              ? null
+                                              : hasActiveMatch
+                                              ? null
                                               : () => _generateMatch(
                                                   delayMilliseconds: 800,
                                                 ),
-                                          icon: const Icon(
-                                            Icons.refresh,
+                                          icon: Icon(
+                                            isRestoringActiveMatch ||
+                                                    hasActiveMatch
+                                                ? Icons.lock_outline_rounded
+                                                : Icons.refresh,
                                             size: 16,
                                           ),
-                                          label: const Text(
-                                            'Reshuffle',
+                                          label: Text(
+                                            isRestoringActiveMatch ||
+                                                    hasActiveMatch
+                                                ? 'Locked'
+                                                : 'Reshuffle',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 12,

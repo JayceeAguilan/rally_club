@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dupr_rating.dart';
 import 'models/app_user.dart';
 import 'models/club.dart';
-import 'models/player.dart';
 import 'firebase_service.dart';
 import 'offline_cache_store.dart';
 

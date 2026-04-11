@@ -17,7 +17,7 @@ class OfflineCacheStore {
       return null;
     }
 
-    return Map<String, dynamic>.from(decoded as Map);
+    return Map<String, dynamic>.from(decoded);
   }
 
   Future<void> writeList(String key, List<Map<String, dynamic>> value) {
