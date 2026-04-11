@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'main.dart';
 import 'match_saved_screen.dart';
 import 'match_generator.dart';
+import 'match_voice_announcer.dart';
 import 'models/player.dart';
 import 'models/match_record.dart';
 import 'firebase_service.dart';
@@ -21,9 +24,33 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
   // 'A' or 'B'
   String _selectedWinner = 'A';
   bool _isSaving = false;
+  bool _isSpeaking = false;
+  bool _autoAnnouncementQueued = false;
+  late final MatchVoiceAnnouncer _voiceAnnouncer;
 
   bool get _includesGuestPlayers =>
       widget.match.allPlayers.any((player) => player.isGuest);
+
+  @override
+  void initState() {
+    super.initState();
+    _voiceAnnouncer = MatchVoiceAnnouncer();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_autoAnnouncementQueued) {
+        return;
+      }
+
+      _autoAnnouncementQueued = true;
+      unawaited(_speakLineup());
+    });
+  }
+
+  @override
+  void dispose() {
+    unawaited(_voiceAnnouncer.stop());
+    super.dispose();
+  }
 
   String _getLogicLabel(String logic) {
     switch (logic) {
@@ -42,6 +69,51 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
 
   String _getGameModeLabel() {
     return widget.match.gameMode == 'singles' ? 'Singles' : 'Doubles';
+  }
+
+  Future<void> _speakLineup({bool showFailureMessage = false}) async {
+    if (_isSpeaking) {
+      return;
+    }
+
+    setState(() {
+      _isSpeaking = true;
+    });
+
+    final success = await _voiceAnnouncer.speakLineup(
+      teamA: widget.match.teamA,
+      teamB: widget.match.teamB,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isSpeaking = false;
+    });
+
+    if (!success && showFailureMessage) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Voice playback is unavailable on this device or browser.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _stopLineupVoice() async {
+    await _voiceAnnouncer.stop();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isSpeaking = false;
+    });
   }
 
   /// Show confirmation dialog, then save match result to the database.
@@ -68,7 +140,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
         ),
         content: Text(
           _includesGuestPlayers
-              ? 'Save result with Team $_selectedWinner as the winner?\n\nPermanent player standings will be updated, and guest players will be logged for this session only.'
+              ? 'Save result with Team $_selectedWinner as the winner?\n\nPermanent player standings will be updated, and guest players will remain saved on this device only.'
               : 'Save result with Team $_selectedWinner as the winner?\n\nThis will update each player\'s individual standing.',
           style: TextStyle(color: AppColors.textMuted(context)),
         ),
@@ -99,6 +171,8 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
     );
 
     if (confirmed != true) return;
+
+    await _stopLineupVoice();
 
     setState(() {
       _isSaving = true;
@@ -161,6 +235,9 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
   Widget build(BuildContext context) {
     final isDoubles = widget.match.gameMode == 'doubles';
     final isAdmin = context.select<AuthProvider, bool>((auth) => auth.isAdmin);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompactLayout = screenWidth < 430;
+    final horizontalPadding = isCompactLayout ? 16.0 : 24.0;
 
     return Scaffold(
       backgroundColor: AppColors.background(context),
@@ -173,12 +250,30 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const AppBrandTitle(),
+        actions: [
+          IconButton(
+            tooltip: _isSpeaking ? 'Stop voice' : 'Read teams aloud',
+            onPressed: _isSpeaking
+                ? _stopLineupVoice
+                : () => _speakLineup(showFailureMessage: true),
+            icon: _isSpeaking
+                ? Icon(
+                    Icons.stop_circle_outlined,
+                    color: AppColors.primary(context),
+                  )
+                : Icon(
+                    Icons.volume_up_rounded,
+                    color: AppColors.primary(context),
+                  ),
+          ),
+          const TopNavbarSyncStatusIndicator(),
+        ],
       ),
       body: !isAdmin
           ? _buildAccessDeniedState(context)
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
                 vertical: 16.0,
               ),
               child: Column(
@@ -219,7 +314,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                             'Match Result',
                             style: TextStyle(
                               color: AppColors.textMain(context),
-                              fontSize: 32,
+                              fontSize: isCompactLayout ? 28 : 32,
                               fontWeight: FontWeight.w900,
                               letterSpacing: -1.0,
                               height: 1.1,
@@ -235,15 +330,16 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                               color: AppColors.surfaceContainerHigh(context),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Icon(
                                   Icons.sports_tennis,
                                   color: AppColors.primary(context),
                                   size: 16,
                                 ),
-                                const SizedBox(width: 8),
                                 Text(
                                   '${_getGameModeLabel().toUpperCase()} • ${_getLogicLabel(widget.match.matchLogic).toUpperCase()}',
                                   style: TextStyle(
@@ -293,9 +389,9 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                           isDoubles
                               ? '${widget.match.teamA.length + widget.match.teamB.length} players matched into 2 teams'
                               : '1 vs 1 showdown ready',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 24,
+                            fontSize: isCompactLayout ? 20 : 24,
                             fontWeight: FontWeight.w900,
                             fontStyle: FontStyle.italic,
                           ),
@@ -343,98 +439,34 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                   const SizedBox(height: 48),
 
                   // Final Actions
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: ElevatedButton(
-                          onPressed: _isSaving ? null : _confirmAndSaveResult,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.textMain(context),
-                            foregroundColor: AppColors.isDark(context)
-                                ? Colors.black
-                                : Colors.white,
-                            disabledBackgroundColor: AppColors.textMain(
-                              context,
-                            ).withValues(alpha: 0.6),
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 10,
-                          ),
-                          child: _isSaving
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Color(0xFFCAFD00),
-                                    strokeWidth: 3,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Save Result',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppColors.isDark(context)
-                                            ? Colors.black
-                                            : Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Icon(
-                                      Icons.arrow_forward,
-                                      color: AppColors.isDark(context)
-                                          ? Colors.black
-                                          : Colors.white,
-                                    ),
-                                  ],
-                                ),
+                  if (isCompactLayout)
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildSaveResultButton(context),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          style: TextButton.styleFrom(
-                            backgroundColor: AppColors.surfaceContainerHigh(
-                              context,
-                            ),
-                            foregroundColor: AppColors.textMain(context),
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.refresh,
-                                color: AppColors.textMain(context),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Reshuffle',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textMain(context),
-                                ),
-                              ),
-                            ],
-                          ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildReshuffleButton(context),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: _buildSaveResultButton(context),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: _buildReshuffleButton(context),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 110),
                 ],
               ),
@@ -492,6 +524,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
 
   Widget _buildTeamCard(String teamId, String teamName, List<Player> players) {
     final bool isWinner = _selectedWinner == teamId;
+    final isCompactLayout = MediaQuery.sizeOf(context).width < 430;
 
     return GestureDetector(
       onTap: () {
@@ -529,7 +562,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                     Text(
                       teamName,
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: isCompactLayout ? 24 : 28,
                         fontWeight: FontWeight.w900,
                         color: isWinner
                             ? const Color(0xFF242F41)
@@ -590,19 +623,22 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                 ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    isWinner ? '🏆 WINNER' : 'TAP TO SELECT WINNER',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                      color: isWinner
-                          ? const Color(0xFF4A5E00).withValues(alpha: 0.8)
-                          : AppColors.textMuted(context),
+                  Expanded(
+                    child: Text(
+                      isWinner ? '🏆 WINNER' : 'TAP TO SELECT WINNER',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                        color: isWinner
+                            ? const Color(0xFF4A5E00).withValues(alpha: 0.8)
+                            : AppColors.textMuted(context),
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 12),
                   Container(
                     width: 24,
                     height: 24,
@@ -646,6 +682,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
         : (gender == 'Male' ? Icons.male : Icons.person);
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: 56,
@@ -670,34 +707,128 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
           ),
         ),
         const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              name,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: isWinner
-                    ? const Color(0xFF242F41)
-                    : AppColors.textMain(context),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: isWinner
+                      ? const Color(0xFF242F41)
+                      : AppColors.textMain(context),
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              details,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.0,
-                color: isWinner
-                    ? const Color(0xFF4A5E00)
-                    : AppColors.textMuted(context),
+              const SizedBox(height: 2),
+              Text(
+                details,
+                softWrap: true,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                  color: isWinner
+                      ? const Color(0xFF4A5E00)
+                      : AppColors.textMuted(context),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSaveResultButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: _isSaving ? null : _confirmAndSaveResult,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.textMain(context),
+        foregroundColor: AppColors.isDark(context)
+            ? Colors.black
+            : Colors.white,
+        disabledBackgroundColor: AppColors.textMain(
+          context,
+        ).withValues(alpha: 0.6),
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 10,
+      ),
+      child: _isSaving
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                color: Color(0xFFCAFD00),
+                strokeWidth: 3,
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    'Save Result',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.isDark(context)
+                          ? Colors.black
+                          : Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_forward,
+                  color: AppColors.isDark(context)
+                      ? Colors.black
+                      : Colors.white,
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildReshuffleButton(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        unawaited(_voiceAnnouncer.stop());
+        Navigator.pop(context);
+      },
+      style: TextButton.styleFrom(
+        backgroundColor: AppColors.surfaceContainerHigh(context),
+        foregroundColor: AppColors.textMain(context),
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.refresh, color: AppColors.textMain(context)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              'Reshuffle',
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textMain(context),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

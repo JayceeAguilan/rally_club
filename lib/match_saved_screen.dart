@@ -92,7 +92,7 @@ class _MatchSavedScreenState extends State<MatchSavedScreen>
               const SizedBox(height: 16),
               Text(
                 widget.includedGuestPlayers
-                    ? 'Permanent player DUPR ratings were updated.\nGuest players were logged for this session only.'
+                    ? 'Permanent player DUPR ratings were updated.\nGuest players remain saved on this device only.'
                     : 'Seasonal standings and local DUPR-style\nratings have been updated.',
                 textAlign: TextAlign.center,
                 style: TextStyle(

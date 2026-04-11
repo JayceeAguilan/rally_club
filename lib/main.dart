@@ -17,6 +17,7 @@ import 'models/announcement_inbox_status.dart';
 import 'auth_provider.dart';
 import 'auth_gate.dart';
 import 'announcement_notification_utils.dart';
+import 'sync_status.dart';
 
 class AppColors {
   static bool isDark(BuildContext context) =>
@@ -51,6 +52,8 @@ class AppColors {
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
 final GlobalKey<ScaffoldState> mainScaffoldKey = GlobalKey<ScaffoldState>();
+final GlobalKey<DashboardScreenState> dashboardKey =
+    GlobalKey<DashboardScreenState>();
 final GlobalKey<MatchSetupScreenState> matchSetupKey =
     GlobalKey<MatchSetupScreenState>();
 final GlobalKey<StandingsScreenState> standingsKey =
@@ -67,8 +70,13 @@ void main() async {
   );
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider<SyncStatusController>.value(
+          value: SyncStatusController.instance,
+        ),
+      ],
       child: const KineticCourtApp(),
     ),
   );
@@ -186,8 +194,27 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshAnnouncementInboxStatus();
+      _hydrateAnnouncementInboxStatus();
     });
+  }
+
+  Future<void> _hydrateAnnouncementInboxStatus() async {
+    final auth = context.read<AuthProvider>();
+    final uid = auth.firebaseUser?.uid ?? auth.appUser?.uid;
+    final clubId = auth.appUser?.clubId;
+    if (uid == null || clubId == null) {
+      return;
+    }
+
+    final cachedStatus = await FirebaseService()
+        .getCachedAnnouncementInboxStatus(actingUid: uid, clubId: clubId);
+    if (mounted && cachedStatus != null) {
+      setState(() {
+        _announcementInboxStatus = cachedStatus;
+      });
+    }
+
+    unawaited(_refreshAnnouncementInboxStatus());
   }
 
   void _selectIndex(int index) {
@@ -207,6 +234,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         _announcementScreenVisitMarker += 1;
       }
     });
+    if (index == 0) dashboardKey.currentState?.refreshDashboardData();
     if (index == 2) matchSetupKey.currentState?.refreshPlayers();
     if (index == 3) standingsKey.currentState?.refreshStandings();
   }
@@ -246,6 +274,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     final List<Widget> screens = [
       DashboardScreen(
+        key: dashboardKey,
         announcementInboxStatus: _announcementInboxStatus,
         onNewMatchTap: (mode) {
           if (!isAdmin) return;
@@ -299,7 +328,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     ),
                   ],
                 ),
-                
               ],
             ),
           ),
@@ -439,21 +467,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
     );
 
+    final content = isDesktop
+        ? Row(
+            children: [
+              sidebar,
+              Expanded(
+                child: IndexedStack(index: _currentIndex, children: screens),
+              ),
+            ],
+          )
+        : IndexedStack(index: _currentIndex, children: screens);
+
     return Scaffold(
       key: mainScaffoldKey,
       drawer: isDesktop ? null : Drawer(child: sidebar),
       extendBody: !isDesktop,
       backgroundColor: AppColors.background(context),
-      body: isDesktop
-          ? Row(
-              children: [
-                sidebar,
-                Expanded(
-                  child: IndexedStack(index: _currentIndex, children: screens),
-                ),
-              ],
-            )
-          : IndexedStack(index: _currentIndex, children: screens),
+      body: content,
       bottomNavigationBar: isDesktop
           ? null
           : Padding(
@@ -657,7 +687,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
     );
   }
-
 }
 
 class AppBrandTitle extends StatelessWidget {
@@ -685,7 +714,16 @@ class AppBrandTitle extends StatelessWidget {
   }
 }
 
-class DashboardScreen extends StatelessWidget {
+class TopNavbarSyncStatusIndicator extends StatelessWidget {
+  const TopNavbarSyncStatusIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SyncStatusBadge(compact: true);
+  }
+}
+
+class DashboardScreen extends StatefulWidget {
   final Function(String) onNewMatchTap;
   final VoidCallback onAnnouncementsTap;
   final AnnouncementInboxStatus announcementInboxStatus;
@@ -696,6 +734,161 @@ class DashboardScreen extends StatelessWidget {
     required this.onAnnouncementsTap,
     required this.announcementInboxStatus,
   });
+
+  @override
+  State<DashboardScreen> createState() => DashboardScreenState();
+}
+
+class DashboardScreenState extends State<DashboardScreen> {
+  Future<List<Player>> _playersFuture = Future.value(const <Player>[]);
+  Future<List<MatchRecord>> _matchesFuture = Future.value(
+    const <MatchRecord>[],
+  );
+  List<Player> _cachedPlayers = const <Player>[];
+  List<MatchRecord> _cachedMatches = const <MatchRecord>[];
+  DateTime? _statsLastUpdatedAt;
+  String? _loadedClubId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final clubId = context.read<AuthProvider>().appUser?.clubId;
+    if (clubId == null || clubId.isEmpty || _loadedClubId == clubId) {
+      return;
+    }
+
+    _loadedClubId = clubId;
+    refreshDashboardData();
+  }
+
+  void refreshDashboardData() {
+    final auth = context.read<AuthProvider>();
+    final clubId = auth.appUser?.clubId;
+    if (clubId == null || clubId.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _playersFuture = FirebaseService().getPlayers(clubId: clubId).then((
+        players,
+      ) {
+        _cachedPlayers = players;
+        _statsLastUpdatedAt =
+            _resolveLatestPlayerUpdate(players) ?? DateTime.now();
+        return players;
+      });
+      _matchesFuture = FirebaseService().getMatches(clubId: clubId).then((
+        matches,
+      ) {
+        _cachedMatches = matches;
+        return matches;
+      });
+    });
+
+    unawaited(_refreshDashboardFromRemote());
+  }
+
+  Future<void> _refreshDashboardFromRemote() async {
+    final auth = context.read<AuthProvider>();
+    final clubId = auth.appUser?.clubId;
+    if (clubId == null || clubId.isEmpty) {
+      return;
+    }
+
+    try {
+      await FirebaseService().preloadCoreClubData(
+        clubId: clubId,
+        actingUid: auth.firebaseUser?.uid,
+      );
+    } catch (_) {
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    final players = await FirebaseService().getPlayers(clubId: clubId);
+    final matches = await FirebaseService().getMatches(clubId: clubId);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _cachedPlayers = players;
+      _cachedMatches = matches;
+      _statsLastUpdatedAt =
+          _resolveLatestPlayerUpdate(players) ?? DateTime.now();
+      _playersFuture = Future.value(players);
+      _matchesFuture = Future.value(matches);
+    });
+  }
+
+  DateTime? _resolveLatestPlayerUpdate(List<Player> players) {
+    DateTime? latestUpdate;
+
+    for (final player in players) {
+      final updatedAt = DateTime.tryParse(player.updatedAt ?? '');
+      if (updatedAt == null) {
+        continue;
+      }
+      if (latestUpdate == null || updatedAt.isAfter(latestUpdate)) {
+        latestUpdate = updatedAt;
+      }
+    }
+
+    return latestUpdate?.toLocal();
+  }
+
+  String _formatStatsLastUpdated(DateTime? dateTime) {
+    if (dateTime == null) {
+      return 'Last updated when club data syncs';
+    }
+
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    if (difference.inSeconds < 60) {
+      return 'Last updated just now';
+    }
+    if (difference.inMinutes < 60) {
+      return 'Last updated ${difference.inMinutes}m ago';
+    }
+
+    final today = DateTime(now.year, now.month, now.day);
+    final updatedDay = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final timeLabel = _formatClockTime(dateTime);
+
+    if (updatedDay == today) {
+      return 'Last updated today at $timeLabel';
+    }
+    if (updatedDay == today.subtract(const Duration(days: 1))) {
+      return 'Last updated yesterday at $timeLabel';
+    }
+
+    const monthNames = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final month = monthNames[dateTime.month - 1];
+    return 'Last updated $month ${dateTime.day} at $timeLabel';
+  }
+
+  String _formatClockTime(DateTime dateTime) {
+    final hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final period = dateTime.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -713,6 +906,7 @@ class DashboardScreen extends StatelessWidget {
             mainScaffoldKey.currentState?.openDrawer();
           },
         ),
+        actions: const [TopNavbarSyncStatusIndicator()],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -765,19 +959,16 @@ class DashboardScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 24),
                               FutureBuilder<List<Player>>(
-                                future: FirebaseService().getPlayers(
-                                  clubId: Provider.of<AuthProvider>(
-                                    context,
-                                    listen: false,
-                                  ).appUser!.clubId!,
-                                ),
+                                future: _playersFuture,
                                 builder: (context, snapshot) {
+                                  final players =
+                                      snapshot.data ?? _cachedPlayers;
                                   int totalPlayers = 0;
                                   int availablePlayers = 0;
 
-                                  if (snapshot.hasData) {
-                                    totalPlayers = snapshot.data!.length;
-                                    availablePlayers = snapshot.data!
+                                  if (players.isNotEmpty) {
+                                    totalPlayers = players.length;
+                                    availablePlayers = players
                                         .where((p) => p.isAvailable)
                                         .length;
                                   }
@@ -801,13 +992,24 @@ class DashboardScreen extends StatelessWidget {
                                   );
                                 },
                               ),
+                              const SizedBox(height: 12),
+                              Text(
+                                _formatStatsLastUpdated(_statsLastUpdatedAt),
+                                style: TextStyle(
+                                  color: AppColors.onPrimary(
+                                    context,
+                                  ).withValues(alpha: 0.76),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: r.labelSize,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 16),
 
                         const AutomaticImageSlider(),
-                        if (announcementInboxStatus.unreadCount > 0) ...[
+                        if (widget.announcementInboxStatus.unreadCount > 0) ...[
                           const SizedBox(height: 16),
                           Container(
                             width: double.infinity,
@@ -834,19 +1036,21 @@ class DashboardScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
-                                  '${announcementInboxStatus.unreadCount} announcement${announcementInboxStatus.unreadCount == 1 ? '' : 's'} waiting for you.',
+                                  '${widget.announcementInboxStatus.unreadCount} announcement${widget.announcementInboxStatus.unreadCount == 1 ? '' : 's'} waiting for you.',
                                   style: TextStyle(
                                     fontSize: r.subtitleSize,
                                     fontWeight: FontWeight.w900,
                                     color: AppColors.textMain(context),
                                   ),
                                 ),
-                                if (announcementInboxStatus
+                                if (widget
+                                        .announcementInboxStatus
                                         .latestUnreadAnnouncement !=
                                     null) ...[
                                   const SizedBox(height: 8),
                                   Text(
-                                    announcementInboxStatus
+                                    widget
+                                        .announcementInboxStatus
                                         .latestUnreadAnnouncement!
                                         .title,
                                     style: TextStyle(
@@ -860,7 +1064,7 @@ class DashboardScreen extends StatelessWidget {
                                 Align(
                                   alignment: Alignment.centerLeft,
                                   child: TextButton.icon(
-                                    onPressed: onAnnouncementsTap,
+                                    onPressed: widget.onAnnouncementsTap,
                                     icon: const Icon(Icons.campaign),
                                     label: const Text('Open announcements'),
                                   ),
@@ -938,14 +1142,10 @@ class DashboardScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         FutureBuilder<List<MatchRecord>>(
-                          future: FirebaseService().getMatches(
-                            clubId: Provider.of<AuthProvider>(
-                              context,
-                              listen: false,
-                            ).appUser!.clubId!,
-                          ),
+                          future: _matchesFuture,
                           builder: (context, snapshot) {
-                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            final matches = snapshot.data ?? _cachedMatches;
+                            if (matches.isEmpty) {
                               return Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(
@@ -984,7 +1184,7 @@ class DashboardScreen extends StatelessWidget {
                               );
                             }
 
-                            final match = snapshot.data!.first;
+                            final match = matches.first;
                             final teamA = match.teamANames;
                             final teamB = match.teamBNames;
                             final winner = match.winningSide;
@@ -1157,7 +1357,7 @@ class DashboardScreen extends StatelessWidget {
     IconData icon,
   ) {
     return InkWell(
-      onTap: () => onNewMatchTap(mode),
+      onTap: () => widget.onNewMatchTap(mode),
       borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(20),

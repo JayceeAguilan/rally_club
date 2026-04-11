@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -42,6 +43,23 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
     super.dispose();
   }
 
+  Future<void> _preloadClubData() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final clubId = auth.appUser?.clubId;
+    if (clubId == null || clubId.isEmpty) {
+      return;
+    }
+
+    try {
+      await FirebaseService().preloadCoreClubData(
+        clubId: clubId,
+        actingUid: auth.firebaseUser?.uid,
+      );
+    } catch (_) {
+      // Local-first reads will fall back to the current cache.
+    }
+  }
+
   void _refreshPlayers() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     setState(() {
@@ -49,7 +67,23 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
         clubId: auth.appUser!.clubId!,
       );
     });
+
+    unawaited(_refreshPlayersFromRemote());
     _loadStandings();
+  }
+
+  Future<void> _refreshPlayersFromRemote() async {
+    await _preloadClubData();
+    if (!mounted) {
+      return;
+    }
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    setState(() {
+      _playersFuture = FirebaseService().getPlayers(
+        clubId: auth.appUser!.clubId!,
+      );
+    });
   }
 
   Future<void> _loadStandings() async {
@@ -72,6 +106,38 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
         _standingsMap = map;
       });
     }
+
+    unawaited(_refreshStandingsFromRemote());
+  }
+
+  Future<void> _refreshStandingsFromRemote() async {
+    await _preloadClubData();
+    if (!mounted) {
+      return;
+    }
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final standings = await FirebaseService().getPlayerStandings(
+      clubId: auth.appUser!.clubId!,
+    );
+    final map = <String, Map<String, int>>{};
+    for (final s in standings) {
+      final player = s['player'] as Player;
+      if (player.id != null) {
+        map[player.id!] = {
+          'wins': s['wins'] as int,
+          'losses': s['losses'] as int,
+        };
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _standingsMap = map;
+    });
   }
 
   Future<void> _openAddPlayerSheet({Player? player}) async {
@@ -184,6 +250,7 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
             mainScaffoldKey.currentState?.openDrawer();
           },
         ),
+        actions: const [TopNavbarSyncStatusIndicator()],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -326,7 +393,8 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                                               'Unrated',
                                               _selectedSkill == 'Unrated',
                                               () => setState(
-                                                () => _selectedSkill = 'Unrated',
+                                                () =>
+                                                    _selectedSkill = 'Unrated',
                                               ),
                                             ),
                                             const SizedBox(width: 8),
@@ -467,7 +535,8 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                        ] else ...[],
+                        ] else
+                          ...[],
 
                         // Player List from Local Database
                         FutureBuilder<List<Player>>(
@@ -645,6 +714,7 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
           ? Padding(
               padding: const EdgeInsets.only(bottom: 80.0),
               child: FloatingActionButton(
+                heroTag: 'player_management_add_player_fab',
                 onPressed: _openAddPlayerSheet,
                 backgroundColor: const Color(0xFFCAFD00),
                 child: const Icon(Icons.add, color: Color(0xFF4A5E00)),

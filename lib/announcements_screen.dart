@@ -251,10 +251,12 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             icon: Icon(Icons.refresh, color: AppColors.primary(context)),
             tooltip: 'Refresh announcements',
           ),
+          const TopNavbarSyncStatusIndicator(),
         ],
       ),
       floatingActionButton: isAdmin
           ? FloatingActionButton.extended(
+              heroTag: 'announcements_post_fab',
               onPressed: _openAnnouncementComposer,
               backgroundColor: AppColors.primaryContainer(context),
               foregroundColor: AppColors.onPrimaryContainer(context),

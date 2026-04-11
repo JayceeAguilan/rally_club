@@ -8,6 +8,7 @@ import 'models/app_user.dart';
 import 'models/club.dart';
 import 'models/player.dart';
 import 'firebase_service.dart';
+import 'offline_cache_store.dart';
 
 class AuthProvider extends ChangeNotifier {
   static const rememberMePreferenceKey = 'auth.rememberMe';
@@ -25,6 +26,9 @@ class AuthProvider extends ChangeNotifier {
   bool? _isAuthenticatedOverride;
   bool? _isEmailVerifiedOverride;
   StreamSubscription<User?>? _authSub;
+
+  String _cachedAppUserKey(String uid) => 'offline.app_user.$uid';
+  String _cachedClubKey(String clubId) => 'offline.club.$clubId';
 
   AuthProvider({Future<SharedPreferences> Function()? loadPreferences})
     : _loadPreferences = loadPreferences ?? SharedPreferences.getInstance {
@@ -222,15 +226,79 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> _cacheResolvedSessionState() async {
+    final appUser = _appUser;
+    if (appUser == null) {
+      return;
+    }
+
+    await OfflineCacheStore.instance.writeMap(
+      _cachedAppUserKey(appUser.uid),
+      appUser.toMap(),
+    );
+
+    final club = _club;
+    if (club != null) {
+      await OfflineCacheStore.instance.writeMap(
+        _cachedClubKey(club.id),
+        club.toMap(),
+      );
+    }
+  }
+
+  Future<AppUser?> _readCachedAppUser(String uid) async {
+    final data = await OfflineCacheStore.instance.readMap(
+      _cachedAppUserKey(uid),
+    );
+    if (data == null) {
+      return null;
+    }
+
+    return AppUser.fromMap(data);
+  }
+
+  Future<Club?> _readCachedClub(String? clubId) async {
+    if (clubId == null || clubId.isEmpty) {
+      return null;
+    }
+
+    final data = await OfflineCacheStore.instance.readMap(
+      _cachedClubKey(clubId),
+    );
+    if (data == null) {
+      return null;
+    }
+
+    return Club.fromMap(data);
+  }
+
+  Future<void> _clearCachedSessionState({String? uid, String? clubId}) async {
+    if (uid != null && uid.isNotEmpty) {
+      await OfflineCacheStore.instance.remove(_cachedAppUserKey(uid));
+    }
+
+    if (clubId != null && clubId.isNotEmpty) {
+      await OfflineCacheStore.instance.remove(_cachedClubKey(clubId));
+    }
+  }
+
   Future<void> _onAuthStateChanged(User? _) async {
     await _sessionPreferenceReady.future;
 
+    final previousAppUser = _appUser;
+    final previousClubId = _club?.id ?? _appUser?.clubId;
     final user = _auth.currentUser;
     _firebaseUser = user;
     if (user == null) {
       _appUser = null;
       _club = null;
       _isLoading = false;
+      unawaited(
+        _clearCachedSessionState(
+          uid: previousAppUser?.uid,
+          clubId: previousClubId,
+        ),
+      );
       notifyListeners();
       return;
     }
@@ -240,30 +308,64 @@ class AuthProvider extends ChangeNotifier {
       if (userDoc.exists) {
         _appUser = AppUser.fromMap(userDoc.data()!);
         if (_appUser!.clubId != null) {
-          final clubDoc = await _db
-              .collection('clubs')
-              .doc(_appUser!.clubId)
-              .get();
-          _club = clubDoc.exists
-              ? Club.fromMap(clubDoc.data()!)
-              : _fallbackClub(_appUser!.clubId!);
+          try {
+            final clubDoc = await _db
+                .collection('clubs')
+                .doc(_appUser!.clubId)
+                .get();
+            _club = clubDoc.exists
+                ? Club.fromMap(clubDoc.data()!)
+                : await _readCachedClub(_appUser!.clubId) ??
+                      _fallbackClub(_appUser!.clubId!);
+          } catch (_) {
+            _club =
+                await _readCachedClub(_appUser!.clubId) ??
+                _fallbackClub(_appUser!.clubId!);
+          }
+        } else {
+          _club = null;
         }
 
-        // One-time legacy data migration
-        await _runLegacyMigrationIfNeeded();
-        await _syncLinkedPlayerParticipationState();
+        await _cacheResolvedSessionState();
       } else {
-        _appUser = null;
-        _club = null;
+        _appUser = await _readCachedAppUser(user.uid);
+        _club =
+            await _readCachedClub(_appUser?.clubId) ??
+            (_appUser?.clubId != null
+                ? _fallbackClub(_appUser!.clubId!)
+                : null);
+      }
+
+      if (_appUser != null) {
+        await _runLegacyMigrationIfNeeded();
+        try {
+          await _syncLinkedPlayerParticipationState();
+        } catch (e) {
+          debugPrint(
+            'AuthProvider: deferred player participation sync until online: $e',
+          );
+        }
       }
     } catch (e) {
-      debugPrint('AuthProvider: failed to load user data: $e');
-      _appUser = null;
-      _club = null;
+      debugPrint('AuthProvider: failed to load live user data: $e');
+      _appUser = await _readCachedAppUser(user.uid);
+      _club =
+          await _readCachedClub(_appUser?.clubId) ??
+          (_appUser?.clubId != null ? _fallbackClub(_appUser!.clubId!) : null);
     }
 
     _isLoading = false;
     notifyListeners();
+
+    final clubId = _appUser?.clubId;
+    if (clubId != null) {
+      unawaited(
+        FirebaseService().preloadCoreClubData(
+          clubId: clubId,
+          actingUid: _firebaseUser?.uid,
+        ),
+      );
+    }
   }
 
   Future<void> _runLegacyMigrationIfNeeded() async {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -49,7 +50,42 @@ class _PlayerMatchHistoryScreenState extends State<PlayerMatchHistoryScreen> {
     _refreshMatches();
   }
 
+  Future<void> _preloadClubData() async {
+    final auth = context.read<AuthProvider>();
+    final clubId = auth.appUser?.clubId;
+    if (clubId == null || clubId.isEmpty) {
+      return;
+    }
+
+    try {
+      await FirebaseService().preloadCoreClubData(
+        clubId: clubId,
+        actingUid: auth.firebaseUser?.uid,
+      );
+    } catch (_) {
+      // Cached match snapshots keep the history screen usable offline.
+    }
+  }
+
   void _refreshMatches() {
+    final auth = context.read<AuthProvider>();
+    final loadMatches =
+        widget.loadMatches ??
+        ((clubId) => FirebaseService().getMatches(clubId: clubId));
+
+    setState(() {
+      _matchesFuture = loadMatches(auth.appUser!.clubId!);
+    });
+
+    unawaited(_refreshMatchesFromRemote());
+  }
+
+  Future<void> _refreshMatchesFromRemote() async {
+    await _preloadClubData();
+    if (!mounted) {
+      return;
+    }
+
     final auth = context.read<AuthProvider>();
     final loadMatches =
         widget.loadMatches ??
@@ -169,6 +205,7 @@ class _PlayerMatchHistoryScreenState extends State<PlayerMatchHistoryScreen> {
             icon: Icon(Icons.refresh, color: AppColors.primary(context)),
             tooltip: 'Refresh player history',
           ),
+          const TopNavbarSyncStatusIndicator(),
         ],
       ),
       body: FutureBuilder<List<MatchRecord>>(

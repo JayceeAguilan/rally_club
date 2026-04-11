@@ -1,33 +1,46 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rally_club/models/player.dart';
 import 'package:rally_club/session_guest_player_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  setUp(() {
-    SessionGuestPlayerStore.instance.clear();
-  });
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('guest store upserts, updates, and clears session players', () {
-    final store = SessionGuestPlayerStore.instance;
-    final guest = Player(
-      id: store.createGuestId(),
-      name: 'Drop-in Dana',
-      gender: 'Female',
-      skillLevel: 'Beg',
-      isAvailable: true,
-      isGuest: true,
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await SessionGuestPlayerStore.instance.clear();
+    await SessionGuestPlayerStore.instance.loadPersistedGuests(
+      forceRefresh: true,
     );
-
-    store.upsert(guest);
-    expect(store.players, hasLength(1));
-    expect(store.players.single.isGuest, isTrue);
-
-    store.upsert(guest.copyWith(isAvailable: false));
-    expect(store.players.single.isAvailable, isFalse);
-
-    store.clear();
-    expect(store.players, isEmpty);
   });
+
+  test(
+    'guest store upserts, persists, updates, and clears session players',
+    () async {
+      final store = SessionGuestPlayerStore.instance;
+      final guest = Player(
+        id: store.createGuestId(),
+        name: 'Drop-in Dana',
+        gender: 'Female',
+        skillLevel: 'Beg',
+        isAvailable: true,
+        isGuest: true,
+      );
+
+      await store.upsert(guest);
+      await store.loadPersistedGuests(forceRefresh: true);
+      expect(store.players, hasLength(1));
+      expect(store.players.single.isGuest, isTrue);
+
+      await store.upsert(guest.copyWith(isAvailable: false));
+      await store.loadPersistedGuests(forceRefresh: true);
+      expect(store.players.single.isAvailable, isFalse);
+
+      await store.clear();
+      await store.loadPersistedGuests(forceRefresh: true);
+      expect(store.players, isEmpty);
+    },
+  );
 
   test(
     'mergeSessionPlayers excludes guests that duplicate permanent names',

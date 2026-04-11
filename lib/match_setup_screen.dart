@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'main.dart';
@@ -26,7 +27,37 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
   @override
   void initState() {
     super.initState();
+    _loadPersistedGuestPlayers();
     refreshPlayers();
+  }
+
+  Future<void> _loadPersistedGuestPlayers() async {
+    await SessionGuestPlayerStore.instance.loadPersistedGuests();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _guestPlayers = SessionGuestPlayerStore.instance.players;
+    });
+  }
+
+  Future<void> _preloadClubData() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final clubId = auth.appUser?.clubId;
+    if (clubId == null || clubId.isEmpty) {
+      return;
+    }
+
+    try {
+      await FirebaseService().preloadCoreClubData(
+        clubId: clubId,
+        actingUid: auth.firebaseUser?.uid,
+      );
+    } catch (_) {
+      // Local-first reads will still return the latest cached snapshot.
+    }
   }
 
   void refreshPlayers() {
@@ -53,6 +84,31 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
 
     setState(() {
       _playersFuture = future;
+    });
+
+    unawaited(_refreshPlayersFromRemote());
+  }
+
+  Future<void> _refreshPlayersFromRemote() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (!auth.isAdmin) {
+      return;
+    }
+
+    await _preloadClubData();
+    if (!mounted) {
+      return;
+    }
+
+    final players = await FirebaseService().getPlayers(
+      clubId: auth.appUser!.clubId!,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _playersFuture = Future.value(players);
     });
   }
 
@@ -180,35 +236,53 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
       return;
     }
 
-    SessionGuestPlayerStore.instance.upsert(sessionPlayer);
+    await SessionGuestPlayerStore.instance.upsert(sessionPlayer);
     setState(() {
       _guestPlayers = SessionGuestPlayerStore.instance.players;
     });
   }
 
-  void _toggleGuestAvailability(Player guestPlayer, bool isAvailable) {
-    SessionGuestPlayerStore.instance.upsert(
+  Future<void> _toggleGuestAvailability(
+    Player guestPlayer,
+    bool isAvailable,
+  ) async {
+    await SessionGuestPlayerStore.instance.upsert(
       guestPlayer.copyWith(isAvailable: isAvailable),
     );
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       _guestPlayers = SessionGuestPlayerStore.instance.players;
     });
   }
 
-  void _removeGuestPlayer(Player guestPlayer) {
+  Future<void> _removeGuestPlayer(Player guestPlayer) async {
     final playerId = guestPlayer.id;
     if (playerId == null) {
       return;
     }
 
-    SessionGuestPlayerStore.instance.remove(playerId);
+    await SessionGuestPlayerStore.instance.remove(playerId);
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       _guestPlayers = SessionGuestPlayerStore.instance.players;
     });
   }
 
-  void _clearGuestPlayers() {
-    SessionGuestPlayerStore.instance.clear();
+  Future<void> _clearGuestPlayers() async {
+    await SessionGuestPlayerStore.instance.clear();
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       _guestPlayers = SessionGuestPlayerStore.instance.players;
     });
@@ -237,6 +311,7 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
             mainScaffoldKey.currentState?.openDrawer();
           },
         ),
+        actions: const [TopNavbarSyncStatusIndicator()],
       ),
       body: !isAdmin
           ? _buildAccessDeniedState(context)
@@ -966,18 +1041,19 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
         color: AppColors.surfaceContainerHigh(context),
         borderRadius: BorderRadius.circular(32),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 560;
+
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
+              if (isCompact)
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Temporary guest players stay only in the active session and never create a permanent account.',
+                      'Temporary guest players are saved on this device only and never create a permanent account.',
                       style: TextStyle(
                         fontSize: 14,
                         height: 1.4,
@@ -994,173 +1070,300 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                         color: AppColors.primary(context),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () => _openGuestPlayerSheet(),
+                        icon: const Icon(Icons.person_add_alt_1, size: 18),
+                        label: const Text('Add Guest'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary(context),
+                          foregroundColor: AppColors.onPrimary(context),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Temporary guest players are saved on this device only and never create a permanent account.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.4,
+                              color: AppColors.textMuted(context),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${_guestPlayers.length} guest${_guestPlayers.length == 1 ? '' : 's'} ready',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.3,
+                              color: AppColors.primary(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    FilledButton.icon(
+                      onPressed: () => _openGuestPlayerSheet(),
+                      icon: const Icon(Icons.person_add_alt_1, size: 18),
+                      label: const Text('Add Guest'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary(context),
+                        foregroundColor: AppColors.onPrimary(context),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 16),
-              FilledButton.icon(
-                onPressed: () => _openGuestPlayerSheet(),
-                icon: const Icon(Icons.person_add_alt_1, size: 18),
-                label: const Text('Add Guest'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary(context),
-                  foregroundColor: AppColors.onPrimary(context),
+              const SizedBox(height: 20),
+              if (_guestPlayers.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface(context),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'No guest players added yet. Use this when someone is joining today without a permanent Rally Club account. Guests stay saved on this device until you remove them.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      color: AppColors.textMuted(context),
+                    ),
+                  ),
+                )
+              else ...[
+                for (final guestPlayer in _guestPlayers) ...[
+                  _buildGuestPlayerCard(guestPlayer),
+                  const SizedBox(height: 12),
+                ],
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      _clearGuestPlayers();
+                    },
+                    icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                    label: const Text('Clear Saved Guests'),
+                  ),
                 ),
-              ),
+              ],
             ],
-          ),
-          const SizedBox(height: 20),
-          if (_guestPlayers.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.surface(context),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'No guest players added yet. Use this when someone is joining today without a permanent Rally Club account.',
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.4,
-                  color: AppColors.textMuted(context),
-                ),
-              ),
-            )
-          else ...[
-            for (final guestPlayer in _guestPlayers) ...[
-              _buildGuestPlayerCard(guestPlayer),
-              const SizedBox(height: 12),
-            ],
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _clearGuestPlayers,
-                icon: const Icon(Icons.delete_sweep_outlined, size: 18),
-                label: const Text('Clear Session Guests'),
-              ),
-            ),
-          ],
-        ],
+          );
+        },
       ),
     );
   }
 
   Widget _buildGuestPlayerCard(Player guestPlayer) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: () => _openGuestPlayerSheet(player: guestPlayer),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: AppColors.surface(context),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 440;
+
+        return InkWell(
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border(context)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.primary(context).withValues(alpha: 0.16),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.person_outline,
-                color: AppColors.primary(context),
-              ),
+          onTap: () => _openGuestPlayerSheet(player: guestPlayer),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.surface(context),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border(context)),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          guestPlayer.name,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textMain(context),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary(context),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          'GUEST',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.1,
-                            color: AppColors.onPrimary(context),
-                          ),
-                        ),
-                      ),
-                    ],
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary(context).withValues(alpha: 0.16),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildGuestMetaChip(guestPlayer.gender),
-                      _buildGuestMetaChip(guestPlayer.displayDuprLabel),
-                      _buildGuestMetaChip(
-                        guestPlayer.isAvailable ? 'Available' : 'Bench',
-                      ),
-                    ],
+                  child: Icon(
+                    Icons.person_outline,
+                    color: AppColors.primary(context),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: SwitchListTile.adaptive(
-                          value: guestPlayer.isAvailable,
-                          onChanged: (value) =>
-                              _toggleGuestAvailability(guestPlayer, value),
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          title: Text(
-                            'Available for matching',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textMuted(context),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              guestPlayer.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.textMain(context),
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary(context),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              'GUEST',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.1,
+                                color: AppColors.onPrimary(context),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildGuestMetaChip(guestPlayer.gender),
+                          _buildGuestMetaChip(guestPlayer.displayDuprLabel),
+                          _buildGuestMetaChip(
+                            guestPlayer.isAvailable ? 'Available' : 'Bench',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      if (isCompact)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildGuestAvailabilityControl(
+                              guestPlayer: guestPlayer,
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Edit guest',
+                                  onPressed: () => _openGuestPlayerSheet(
+                                    player: guestPlayer,
+                                  ),
+                                  icon: const Icon(Icons.edit_outlined),
+                                ),
+                                IconButton(
+                                  tooltip: 'Remove guest',
+                                  onPressed: () {
+                                    _removeGuestPlayer(guestPlayer);
+                                  },
+                                  icon: const Icon(Icons.delete_outline),
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      else
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildGuestAvailabilityControl(
+                                guestPlayer: guestPlayer,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              tooltip: 'Edit guest',
+                              onPressed: () =>
+                                  _openGuestPlayerSheet(player: guestPlayer),
+                              icon: const Icon(Icons.edit_outlined),
+                            ),
+                            IconButton(
+                              tooltip: 'Remove guest',
+                              onPressed: () {
+                                _removeGuestPlayer(guestPlayer);
+                              },
+                              icon: const Icon(Icons.delete_outline),
+                            ),
+                          ],
                         ),
-                      ),
-                      IconButton(
-                        tooltip: 'Edit guest',
-                        onPressed: () =>
-                            _openGuestPlayerSheet(player: guestPlayer),
-                        icon: const Icon(Icons.edit_outlined),
-                      ),
-                      IconButton(
-                        tooltip: 'Remove guest',
-                        onPressed: () => _removeGuestPlayer(guestPlayer),
-                        icon: const Icon(Icons.delete_outline),
-                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGuestAvailabilityControl({required Player guestPlayer}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh(context),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Available for matching',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textMain(context),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  guestPlayer.isAvailable
+                      ? 'Included in match generation'
+                      : 'Temporarily benched for this session',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textMuted(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Switch.adaptive(
+            value: guestPlayer.isAvailable,
+            onChanged: (value) {
+              _toggleGuestAvailability(guestPlayer, value);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -1243,7 +1446,7 @@ class _GuestPlayerSheetState extends State<_GuestPlayerSheet> {
               isAvailable: _isAvailable,
               isGuest: true,
               countsAsPlayer: true,
-              notes: 'Session guest',
+              notes: 'Device-only guest',
             );
 
     Navigator.pop(context, guestPlayer);
@@ -1309,7 +1512,7 @@ class _GuestPlayerSheetState extends State<_GuestPlayerSheet> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Guest players are available for match generation right away, but they do not create permanent accounts or roster entries.',
+              'Guest players are available for match generation right away, stay saved on this device, and do not create permanent accounts or roster entries.',
               style: TextStyle(
                 fontSize: 14,
                 height: 1.5,
@@ -1381,7 +1584,8 @@ class _GuestPlayerSheetState extends State<_GuestPlayerSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.playerToEdit?.displayDuprLabel ?? 'DUPR 2.00 BASELINE',
+                    widget.playerToEdit?.displayDuprLabel ??
+                        'DUPR 2.00 BASELINE',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -40,7 +41,40 @@ class StandingsScreenState extends State<StandingsScreen> {
     super.dispose();
   }
 
+  Future<void> _preloadClubData() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final clubId = auth.appUser?.clubId;
+    if (clubId == null || clubId.isEmpty) {
+      return;
+    }
+
+    try {
+      await FirebaseService().preloadCoreClubData(
+        clubId: clubId,
+        actingUid: auth.firebaseUser?.uid,
+      );
+    } catch (_) {
+      // The standings view can still render from cached data.
+    }
+  }
+
   void refreshStandings() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    setState(() {
+      _standingsFuture = FirebaseService().getPlayerStandings(
+        clubId: auth.appUser!.clubId!,
+      );
+    });
+
+    unawaited(_refreshStandingsFromRemote());
+  }
+
+  Future<void> _refreshStandingsFromRemote() async {
+    await _preloadClubData();
+    if (!mounted) {
+      return;
+    }
+
     final auth = Provider.of<AuthProvider>(context, listen: false);
     setState(() {
       _standingsFuture = FirebaseService().getPlayerStandings(
@@ -123,6 +157,7 @@ class StandingsScreenState extends State<StandingsScreen> {
           },
         ),
         title: const AppBrandTitle(),
+        actions: const [TopNavbarSyncStatusIndicator()],
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _standingsFuture,
