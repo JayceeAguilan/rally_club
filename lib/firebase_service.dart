@@ -4,6 +4,7 @@ import 'models/announcement_comment.dart';
 import 'models/announcement_inbox_status.dart';
 import 'models/player.dart';
 import 'models/match_record.dart';
+import 'dupr_rating_engine.dart';
 import 'player_standings_utils.dart';
 
 class FirebaseService {
@@ -114,7 +115,7 @@ class FirebaseService {
         .where('clubId', isEqualTo: clubId)
         .get();
 
-    return snapshot.docs
+    final players = snapshot.docs
         .map((doc) {
           final data = doc.data();
           data['id'] = doc.id;
@@ -122,6 +123,9 @@ class FirebaseService {
         })
         .where((p) => p.isActive && p.countsAsPlayer)
         .toList();
+
+    final matches = await getMatches(clubId: clubId);
+    return applyDerivedDuprRatingsToPlayers(players: players, matches: matches);
   }
 
   Future<void> updatePlayer(
@@ -412,6 +416,13 @@ class FirebaseService {
   }) async {
     await _requireAdmin(uid: createdByUid, clubId: clubId);
 
+    final players = await getPlayers(clubId: clubId);
+    final matches = await getMatches(clubId: clubId);
+    final recalculatedPlayers = applyDerivedDuprRatingsToPlayers(
+      players: players,
+      matches: [...matches, match],
+    );
+
     final batch = _db.batch();
 
     final matchRef = _db.collection('matches').doc();
@@ -437,6 +448,19 @@ class FirebaseService {
       final playerRef = _db.collection('players').doc(id.trim());
       batch.update(playerRef, {
         'lastResult': match.winningSide == 'B' ? 'win' : 'loss',
+      });
+    }
+
+    for (final player in recalculatedPlayers) {
+      if (player.id == null || player.isGuest) {
+        continue;
+      }
+
+      final playerRef = _db.collection('players').doc(player.id);
+      batch.update(playerRef, {
+        'duprRating': player.effectiveDuprRating,
+        'duprMatchesPlayed': player.duprMatchesPlayed,
+        'duprLastUpdatedAt': player.duprLastUpdatedAt ?? match.date,
       });
     }
 

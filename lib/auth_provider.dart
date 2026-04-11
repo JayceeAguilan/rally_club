@@ -3,11 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dupr_rating.dart';
 import 'models/app_user.dart';
 import 'models/club.dart';
 import 'models/player.dart';
 import 'firebase_service.dart';
-import 'notification_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   static const rememberMePreferenceKey = 'auth.rememberMe';
@@ -121,7 +121,6 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String playerName,
     required String gender,
-    required String skillLevel,
   }) async {
     final now = DateTime.now().toIso8601String();
     const clubId = Club.defaultClubId;
@@ -130,7 +129,9 @@ class AuthProvider extends ChangeNotifier {
     final playerData = {
       'name': playerName,
       'gender': gender,
-      'skillLevel': Player.normalizeSkillLevelCode(skillLevel),
+      'duprRating': DuprRating.baselineRating,
+      'duprMatchesPlayed': 0,
+      'duprLastUpdatedAt': now,
       'countsAsPlayer': 1,
       'isAvailable': 1,
       'notes': '',
@@ -159,32 +160,11 @@ class AuthProvider extends ChangeNotifier {
     await batch.commit();
   }
 
-  Future<void> _syncAnnouncementNotifications() async {
-    try {
-      await NotificationService.instance.syncAnnouncementSubscription(
-        clubId: _appUser?.clubId,
-      );
-    } catch (e) {
-      debugPrint('AuthProvider: failed to sync announcement notifications: $e');
-    }
-  }
-
-  Future<void> _clearAnnouncementNotifications() async {
-    try {
-      await NotificationService.instance.clearAnnouncementSubscription();
-    } catch (e) {
-      debugPrint(
-        'AuthProvider: failed to clear announcement notifications: $e',
-      );
-    }
-  }
-
   Future<UserCredential?> _repairOrphanedRegistration({
     required String email,
     required String password,
     required String playerName,
     required String gender,
-    required String skillLevel,
   }) async {
     final existingCred = await _auth.signInWithEmailAndPassword(
       email: email,
@@ -204,7 +184,6 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         playerName: playerName,
         gender: gender,
-        skillLevel: skillLevel,
       );
       await existingCred.user?.sendEmailVerification();
       return existingCred;
@@ -249,7 +228,6 @@ class AuthProvider extends ChangeNotifier {
     final user = _auth.currentUser;
     _firebaseUser = user;
     if (user == null) {
-      await _clearAnnouncementNotifications();
       _appUser = null;
       _club = null;
       _isLoading = false;
@@ -274,15 +252,12 @@ class AuthProvider extends ChangeNotifier {
         // One-time legacy data migration
         await _runLegacyMigrationIfNeeded();
         await _syncLinkedPlayerParticipationState();
-        await _syncAnnouncementNotifications();
       } else {
-        await _clearAnnouncementNotifications();
         _appUser = null;
         _club = null;
       }
     } catch (e) {
       debugPrint('AuthProvider: failed to load user data: $e');
-      await _clearAnnouncementNotifications();
       _appUser = null;
       _club = null;
     }
@@ -333,7 +308,6 @@ class AuthProvider extends ChangeNotifier {
     required String password,
     required String playerName,
     required String gender,
-    required String skillLevel,
   }) async {
     UserCredential? cred;
 
@@ -354,7 +328,6 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         playerName: playerName,
         gender: gender,
-        skillLevel: skillLevel,
       );
       await cred.user?.sendEmailVerification();
 
@@ -367,7 +340,6 @@ class AuthProvider extends ChangeNotifier {
             password: password,
             playerName: playerName,
             gender: gender,
-            skillLevel: skillLevel,
           );
           if (repairedCred != null) {
             return repairedCred;
@@ -394,7 +366,6 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _clearAnnouncementNotifications();
     await _auth.signOut();
   }
 

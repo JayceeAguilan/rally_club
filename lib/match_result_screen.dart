@@ -111,6 +111,12 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
       teamBPlayerIds: widget.match.teamB.map((p) => p.id.toString()).join(','),
       teamANames: widget.match.teamA.map((p) => p.name).join(', '),
       teamBNames: widget.match.teamB.map((p) => p.name).join(', '),
+      teamAPlayerRatings: widget.match.teamA
+          .map((player) => player.displayDuprRating)
+          .join(','),
+      teamBPlayerRatings: widget.match.teamB
+          .map((player) => player.displayDuprRating)
+          .join(','),
       winningSide: _selectedWinner,
       date: DateTime.now().toIso8601String(),
     );
@@ -565,7 +571,7 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                 padding: const EdgeInsets.only(bottom: 16),
                 child: _buildPlayerRow(
                   player.name,
-                  '${player.displaySkillLabel.toUpperCase()} • ${player.gender.toUpperCase()}',
+                  '${player.displayDuprLabel.toUpperCase()} • ${player.displaySkillLabel.toUpperCase()} • ${player.gender.toUpperCase()}',
                   isWinner,
                   player.gender,
                 ),

@@ -14,6 +14,8 @@ class MatchRecord {
   final String teamBPlayerIds; // Comma-separated player IDs: "3,4"
   final String teamANames; // Comma-separated names: "Jaycee,James"
   final String teamBNames; // Comma-separated names: "David,Elena"
+  final String teamAPlayerRatings; // Comma-separated DUPR snapshots.
+  final String teamBPlayerRatings; // Comma-separated DUPR snapshots.
   final String winningSide; // 'A' or 'B'
   final String date; // ISO 8601 datetime string
   final String? clubId;
@@ -27,6 +29,8 @@ class MatchRecord {
     required this.teamBPlayerIds,
     required this.teamANames,
     required this.teamBNames,
+    this.teamAPlayerRatings = '',
+    this.teamBPlayerRatings = '',
     required this.winningSide,
     required this.date,
     this.clubId,
@@ -42,6 +46,8 @@ class MatchRecord {
       'teamBPlayerIds': teamBPlayerIds,
       'teamANames': teamANames,
       'teamBNames': teamBNames,
+      'teamAPlayerRatings': teamAPlayerRatings,
+      'teamBPlayerRatings': teamBPlayerRatings,
       'winningSide': winningSide,
       'date': date,
       'clubId': clubId,
@@ -58,6 +64,8 @@ class MatchRecord {
       teamBPlayerIds: map['teamBPlayerIds'],
       teamANames: map['teamANames'],
       teamBNames: map['teamBNames'],
+      teamAPlayerRatings: map['teamAPlayerRatings'] ?? '',
+      teamBPlayerRatings: map['teamBPlayerRatings'] ?? '',
       winningSide: map['winningSide'],
       date: map['date'],
       clubId: map['clubId'],
@@ -72,6 +80,14 @@ class MatchRecord {
   List<String> get teamAPlayerNameList => _splitCsvValues(teamANames);
 
   List<String> get teamBPlayerNameList => _splitCsvValues(teamBNames);
+
+    List<double> get teamAPlayerRatingList => _splitCsvValues(teamAPlayerRatings)
+      .map((value) => double.tryParse(value) ?? 2.0)
+      .toList();
+
+    List<double> get teamBPlayerRatingList => _splitCsvValues(teamBPlayerRatings)
+      .map((value) => double.tryParse(value) ?? 2.0)
+      .toList();
 
   /// Get the list of winning player IDs.
   List<String> get winnerPlayerIds {

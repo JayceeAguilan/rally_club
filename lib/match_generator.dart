@@ -29,18 +29,9 @@ class MatchGenerationResult {
 }
 
 class MatchGenerator {
-  /// Skill weight mapping for balancing algorithms.
-  static int _skillWeight(String skillLevel) {
-    switch (Player.normalizeSkillLevelCode(skillLevel)) {
-      case 'Beg':
-        return 1;
-      case 'Int':
-        return 2;
-      case 'Adv':
-        return 3;
-      default:
-        return 2;
-    }
+  /// Current DUPR-derived rating used for balancing algorithms.
+  static double _ratingWeight(Player player) {
+    return player.effectiveDuprRating;
   }
 
   /// Main entry point.
@@ -103,8 +94,7 @@ class MatchGenerator {
 
     // Sort the selected players by skill for balanced team assignment
     selected.sort(
-      (a, b) =>
-          _skillWeight(b.skillLevel).compareTo(_skillWeight(a.skillLevel)),
+      (a, b) => _ratingWeight(b).compareTo(_ratingWeight(a)),
     );
 
     if (gameMode == 'singles') {
@@ -129,19 +119,17 @@ class MatchGenerator {
     }
   }
 
-  /// SKILL-SEPARATED: Only players of the same skill level play together.
+  /// SKILL-SEPARATED: Only players in the same derived DUPR band play together.
   static MatchGenerationResult _skillSeparated(
     List<Player> players,
     String gameMode,
   ) {
     final int requiredCount = gameMode == 'singles' ? 2 : 4;
 
-    // Group players by skill level
+    // Group players by derived DUPR label.
     final Map<String, List<Player>> groups = {};
     for (final p in players) {
-      groups
-          .putIfAbsent(Player.normalizeSkillLevelCode(p.skillLevel), () => [])
-          .add(p);
+      groups.putIfAbsent(p.displaySkillLabel, () => []).add(p);
     }
 
     // Find the first group with enough players
@@ -155,7 +143,7 @@ class MatchGenerator {
 
     if (eligibleSkill == null) {
       return MatchGenerationResult.failure(
-        'No skill group has $requiredCount+ available players of the same level.',
+        'No DUPR band has $requiredCount+ available players right now.',
       );
     }
 
@@ -256,12 +244,12 @@ class MatchGenerator {
     // Try both team combinations and pick the most balanced:
     // Option 1: Team A = m1+f1, Team B = m2+f2
     // Option 2: Team A = m1+f2, Team B = m2+f1
-    final skill1A = _skillWeight(m1.skillLevel) + _skillWeight(f1.skillLevel);
-    final skill1B = _skillWeight(m2.skillLevel) + _skillWeight(f2.skillLevel);
+    final skill1A = _ratingWeight(m1) + _ratingWeight(f1);
+    final skill1B = _ratingWeight(m2) + _ratingWeight(f2);
     final diff1 = (skill1A - skill1B).abs();
 
-    final skill2A = _skillWeight(m1.skillLevel) + _skillWeight(f2.skillLevel);
-    final skill2B = _skillWeight(m2.skillLevel) + _skillWeight(f1.skillLevel);
+    final skill2A = _ratingWeight(m1) + _ratingWeight(f2);
+    final skill2B = _ratingWeight(m2) + _ratingWeight(f1);
     final diff2 = (skill2A - skill2B).abs();
 
     if (diff2 < diff1) {

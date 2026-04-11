@@ -1,3 +1,5 @@
+import '../dupr_rating.dart';
+
 /// Represents a player in the Rally Club system.
 /// Standings (wins, losses, winRate, matchesPlayed) are computed dynamically
 /// from match history. Only `lastResult` is stored directly for the
@@ -8,7 +10,10 @@ class Player {
   final String? id;
   final String name;
   final String gender; // 'Male' or 'Female'
-  final String skillLevel; // 'Beg', 'Int', 'Adv'
+  final String skillLevel; // Legacy-only manual field kept for migration reads.
+  final double duprRating;
+  final int duprMatchesPlayed;
+  final String? duprLastUpdatedAt;
   final bool countsAsPlayer;
   final bool isAvailable;
   final String notes;
@@ -26,7 +31,10 @@ class Player {
     this.id,
     required this.name,
     required this.gender,
-    required this.skillLevel,
+    this.skillLevel = '',
+    this.duprRating = DuprRating.baselineRating,
+    this.duprMatchesPlayed = 0,
+    this.duprLastUpdatedAt,
     this.countsAsPlayer = true,
     required this.isAvailable,
     this.notes = '',
@@ -45,44 +53,36 @@ class Player {
     return playerId?.trim().startsWith(guestIdPrefix) ?? false;
   }
 
-  static String normalizeSkillLevelCode(String skillLevel) {
-    switch (skillLevel.trim().toLowerCase()) {
-      case 'beginner':
-      case 'beg':
-        return 'Beg';
-      case 'intermediate':
-      case 'int':
-        return 'Int';
-      case 'advanced':
-      case 'adv':
-        return 'Adv';
-      case 'pro':
-        return 'Adv';
-      default:
-        return skillLevel.trim();
-    }
+  bool get isRated => DuprRating.isRated(duprMatchesPlayed);
+
+  double get effectiveDuprRating => DuprRating.normalizeRating(duprRating);
+
+  String get displayDuprRating => DuprRating.formatRating(effectiveDuprRating);
+
+  String get displayDuprLabel => isRated
+      ? 'DUPR $displayDuprRating'
+      : 'DUPR $displayDuprRating BASELINE';
+
+  static String displaySkillLevelFromRating({
+    required double rating,
+    required int ratedMatches,
+  }) {
+    return DuprRating.labelForRating(
+      rating: rating,
+      ratedMatches: ratedMatches,
+    );
   }
 
-  static String displaySkillLevel(String skillLevel) {
-    switch (normalizeSkillLevelCode(skillLevel)) {
-      case 'Beg':
-        return 'Beginner';
-      case 'Int':
-        return 'Intermediate';
-      case 'Adv':
-        return 'Advanced';
-      default:
-        return skillLevel.trim();
-    }
-  }
-
-  String get normalizedSkillLevel => normalizeSkillLevelCode(skillLevel);
-
-  String get displaySkillLabel => displaySkillLevel(skillLevel);
+  String get displaySkillLabel => displaySkillLevelFromRating(
+    rating: effectiveDuprRating,
+    ratedMatches: duprMatchesPlayed,
+  );
 
   bool matchesSkillFilter(String filterSkill) {
-    return filterSkill == 'All' ||
-        normalizedSkillLevel == normalizeSkillLevelCode(filterSkill);
+    return DuprRating.matchesFilter(
+      filter: filterSkill,
+      currentLabel: displaySkillLabel,
+    );
   }
 
   Map<String, dynamic> toMap() {
@@ -91,7 +91,9 @@ class Player {
       'id': id,
       'name': name,
       'gender': gender,
-      'skillLevel': normalizedSkillLevel,
+      'duprRating': effectiveDuprRating,
+      'duprMatchesPlayed': duprMatchesPlayed,
+      'duprLastUpdatedAt': duprLastUpdatedAt ?? now,
       'countsAsPlayer': countsAsPlayer ? 1 : 0,
       'isAvailable': isAvailable ? 1 : 0,
       'notes': notes,
@@ -112,7 +114,10 @@ class Player {
       id: map['id'],
       name: map['name'],
       gender: map['gender'],
-      skillLevel: normalizeSkillLevelCode(map['skillLevel'] ?? ''),
+      skillLevel: (map['skillLevel'] ?? '').toString(),
+      duprRating: DuprRating.normalizeRating(map['duprRating']),
+      duprMatchesPlayed: (map['duprMatchesPlayed'] as num?)?.toInt() ?? 0,
+      duprLastUpdatedAt: map['duprLastUpdatedAt'] as String?,
       countsAsPlayer: (map['countsAsPlayer'] ?? 1) == 1,
       isAvailable: map['isAvailable'] == 1,
       notes: map['notes'] ?? '',
@@ -132,7 +137,6 @@ class Player {
     return {
       'name': name,
       'gender': gender,
-      'skillLevel': normalizedSkillLevel,
       'isAvailable': isAvailable ? 1 : 0,
       'notes': notes,
       'profileImageBase64': profileImageBase64,
@@ -156,6 +160,9 @@ class Player {
     String? name,
     String? gender,
     String? skillLevel,
+    double? duprRating,
+    int? duprMatchesPlayed,
+    String? duprLastUpdatedAt,
     bool? countsAsPlayer,
     bool? isAvailable,
     String? notes,
@@ -174,6 +181,9 @@ class Player {
       name: name ?? this.name,
       gender: gender ?? this.gender,
       skillLevel: skillLevel ?? this.skillLevel,
+      duprRating: duprRating ?? this.duprRating,
+      duprMatchesPlayed: duprMatchesPlayed ?? this.duprMatchesPlayed,
+      duprLastUpdatedAt: duprLastUpdatedAt ?? this.duprLastUpdatedAt,
       countsAsPlayer: countsAsPlayer ?? this.countsAsPlayer,
       isAvailable: isAvailable ?? this.isAvailable,
       notes: notes ?? this.notes,

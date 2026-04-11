@@ -10,28 +10,24 @@ void main() {
         id: 'p1',
         name: 'Jaycee',
         gender: 'Male',
-        skillLevel: 'Intermediate',
         isAvailable: true,
       ),
       Player(
         id: 'p2',
         name: 'Jamie',
         gender: 'Female',
-        skillLevel: 'Advanced',
         isAvailable: true,
       ),
       Player(
         id: 'p3',
         name: 'Alex',
         gender: 'Male',
-        skillLevel: 'Intermediate',
         isAvailable: true,
       ),
       Player(
         id: 'p4',
         name: 'Sam',
         gender: 'Female',
-        skillLevel: 'Beginner',
         isAvailable: true,
       ),
     ];
@@ -97,6 +93,11 @@ void main() {
     expect(jaycee['bestPartnerGames'], 2);
     expect(jaycee['bestPartnerWins'], 2);
     expect(jaycee['bestPartnerWinPercent'], 100.0);
+
+    final jayceePlayer = jaycee['player'] as Player;
+    expect(jayceePlayer.duprMatchesPlayed, 3);
+    expect(jayceePlayer.duprRating, greaterThan(2.0));
+    expect(jayceePlayer.displaySkillLabel, isNot('Unrated'));
   });
 
   test('players without doubles partners still get standings metrics', () {
@@ -126,5 +127,9 @@ void main() {
     expect(sam['streakLabel'], 'W1');
     expect(sam['bestPartnerName'], isNull);
     expect(sam['bestPartnerGames'], 0);
+
+    final samPlayer = sam['player'] as Player;
+    expect(samPlayer.duprMatchesPlayed, 1);
+    expect(samPlayer.duprRating, greaterThan(2.0));
   });
 }

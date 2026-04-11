@@ -11,6 +11,8 @@ void main() {
       teamBPlayerIds: 'p3,p4',
       teamANames: 'Jaycee, Jamie',
       teamBNames: 'Alex, Sam',
+      teamAPlayerRatings: '3.25,3.4',
+      teamBPlayerRatings: '3.1,2.95',
       winningSide: 'A',
       date: '2026-04-10T09:00:00.000',
     );
@@ -24,6 +26,13 @@ void main() {
     expect(match.didPlayerWin('p1'), isTrue);
     expect(match.partnerNamesFor('p1'), ['Jamie']);
     expect(match.opponentNamesFor('p1'), ['Alex', 'Sam']);
+  });
+
+  test('rating snapshot helpers parse stored DUPR values', () {
+    final match = buildDoublesMatch();
+
+    expect(match.teamAPlayerRatingList, [3.25, 3.4]);
+    expect(match.teamBPlayerRatingList, [3.1, 2.95]);
   });
 
   test('singles players have no partners and the other side as opponents', () {

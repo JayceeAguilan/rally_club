@@ -21,10 +21,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _errorMessage;
 
   String _selectedGender = 'Male';
-  String _selectedSkillLevel = 'Intermediate';
 
   static const _genders = ['Male', 'Female'];
-  static const _skillLevels = ['Beginner', 'Intermediate', 'Advanced'];
 
   // -- Color system --
   static const _bgDark = Color(0xFF0F1A00);
@@ -59,7 +57,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _passwordController.text,
         playerName: _nameController.text.trim(),
         gender: _selectedGender,
-        skillLevel: _selectedSkillLevel,
       );
       if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
     } on Exception catch (e) {
@@ -281,14 +278,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 14),
 
-                          // Skill level selector
-                          _buildChipSelector(
-                            label: 'Skill Level',
-                            options: _skillLevels,
-                            selected: _selectedSkillLevel,
-                            onChanged: (v) =>
-                                setState(() => _selectedSkillLevel = v),
-                            singleRow: true,
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: _inputFill,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: _inputBorder),
+                            ),
+                            child: const Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.query_stats,
+                                  size: 18,
+                                  color: _textSecondary,
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'DUPR Rating',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: _textPrimary,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'New players start unrated at the same baseline. Rally Club updates your rating automatically from actual match results.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: _textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
 
                           // Error message

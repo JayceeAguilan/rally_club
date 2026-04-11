@@ -20,7 +20,7 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
   late Future<List<Player>> _playersFuture;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedSkill = 'All Levels';
+  String _selectedSkill = 'All';
   String _selectedStatus = 'All';
   String _selectedGender = 'All';
   Map<String, Map<String, int>> _standingsMap = {};
@@ -296,11 +296,11 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                                 ),
                                 const SizedBox(height: 20),
 
-                                // Skill Chips
+                                // DUPR band chips
                                 Row(
                                   children: [
                                     Text(
-                                      'SKILL:',
+                                      'DUPR:',
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
@@ -315,11 +315,18 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                                         child: Row(
                                           children: [
                                             _buildActionChip(
-                                              'All Levels',
-                                              _selectedSkill == 'All Levels',
+                                              'All',
+                                              _selectedSkill == 'All',
                                               () => setState(
-                                                () => _selectedSkill =
-                                                    'All Levels',
+                                                () => _selectedSkill = 'All',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            _buildActionChip(
+                                              'Unrated',
+                                              _selectedSkill == 'Unrated',
+                                              () => setState(
+                                                () => _selectedSkill = 'Unrated',
                                               ),
                                             ),
                                             const SizedBox(width: 8),
@@ -493,11 +500,17 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                                         p.gender.toLowerCase().contains(
                                           _searchQuery,
                                         ) ||
+                                        p.displayDuprLabel
+                                            .toLowerCase()
+                                            .contains(_searchQuery) ||
+                                        p.displayDuprRating.contains(
+                                          _searchQuery,
+                                        ) ||
                                         p.displaySkillLabel
                                             .toLowerCase()
                                             .contains(_searchQuery);
                                     bool matchesSkill =
-                                        _selectedSkill == 'All Levels' ||
+                                        _selectedSkill == 'All' ||
                                         p.matchesSkillFilter(_selectedSkill);
                                     bool matchesStatus = true;
                                     if (_selectedStatus == 'Available Now') {
@@ -793,7 +806,7 @@ class _PlayerManagementScreenState extends State<PlayerManagementScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              player.displaySkillLabel,
+                              '${player.displaySkillLabel.toUpperCase()} • ${player.displayDuprRating}',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,

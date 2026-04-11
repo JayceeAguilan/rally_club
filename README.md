@@ -73,29 +73,23 @@ The app now includes a club announcements feed for scheduled play sessions.
 - Members can open any announcement and add comments to respond.
 - Comment authors can edit or delete their own comments.
 - Admins can delete any comment in the announcement thread.
-- Members now get Spark-plan friendly in-app unread badges and dashboard reminders for new announcements.
+- Members now get Spark-safe in-app unread badges and dashboard reminders for new announcements.
+- Announcement awareness is intentionally in-app only, so no Cloud Functions or push-topic setup is required.
 
-## Announcement Push Notifications
+## Optional Functions Folder
 
-Announcement push notifications now use Firebase Cloud Messaging topic delivery.
+The `functions/` folder is kept only for optional backend automation.
 
-- Signed-in club members are subscribed to a club-specific announcements topic after they grant notification permission.
-- When an admin posts a new announcement, a Firebase Function sends a push notification to that club topic.
-- Tapping the notification opens the app and routes the user to the Announcements tab.
+- It is not required for the app's current Spark-safe setup.
+- It should be treated as Blaze-only infrastructure.
+- If your project stays on Spark, ignore that folder and do not deploy Cloud Functions.
+- If you are on Blaze and want those optional triggers, use the instructions in `functions/README.md`.
 
-Setup requirements:
+For Spark projects, prefer scoped deploy commands such as:
 
 ```bash
-flutter pub get
-firebase deploy --only functions
+firebase deploy --only hosting,firestore
 ```
-
-Apple device setup still requires one-time Firebase Console and Xcode configuration:
-
-- Upload an APNs authentication key in the Firebase Console for the `rallyclubapp` project.
-- In Xcode, enable the `Push Notifications` capability for `ios/Runner`.
-
-Android 13+ devices will prompt for notification permission automatically after sign-in.
 
 ## Email Verification Setup
 

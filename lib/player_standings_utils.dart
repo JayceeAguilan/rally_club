@@ -1,3 +1,4 @@
+import 'dupr_rating_engine.dart';
 import 'models/match_record.dart';
 import 'models/player.dart';
 
@@ -6,11 +7,15 @@ List<Map<String, dynamic>> buildPlayerStandings({
   required List<MatchRecord> matches,
 }) {
   final sortedMatches = [...matches]..sort((a, b) => b.date.compareTo(a.date));
+  final ratedPlayers = applyDerivedDuprRatingsToPlayers(
+    players: players,
+    matches: matches,
+  );
   final stats = <String, Map<String, dynamic>>{};
   final resultHistory = <String, List<String>>{};
   final partnerChemistry = <String, Map<String, Map<String, dynamic>>>{};
 
-  for (final player in players) {
+  for (final player in ratedPlayers) {
     if (player.id == null) {
       continue;
     }

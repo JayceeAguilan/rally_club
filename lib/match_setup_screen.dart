@@ -300,7 +300,7 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                               id: 'auto',
                               title: 'Auto-Balanced',
                               subtitle:
-                                  'Algorithmically balances teams based on individual skill ratings.',
+                                  'Algorithmically balances teams based on current DUPR ratings.',
                               icon: Icons.balance,
                               isRecommended: true,
                             ),
@@ -309,7 +309,7 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                               id: 'skill',
                               title: 'Skill-Separated',
                               subtitle:
-                                  'Matches players with the exact same skill level together.',
+                                  'Matches players within the same derived DUPR band together.',
                               icon: Icons.equalizer,
                             ),
                             const SizedBox(height: 12),
@@ -1117,7 +1117,7 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                     runSpacing: 8,
                     children: [
                       _buildGuestMetaChip(guestPlayer.gender),
-                      _buildGuestMetaChip(guestPlayer.displaySkillLabel),
+                      _buildGuestMetaChip(guestPlayer.displayDuprLabel),
                       _buildGuestMetaChip(
                         guestPlayer.isAvailable ? 'Available' : 'Bench',
                       ),
@@ -1197,7 +1197,6 @@ class _GuestPlayerSheet extends StatefulWidget {
 class _GuestPlayerSheetState extends State<_GuestPlayerSheet> {
   final TextEditingController _nameController = TextEditingController();
   String _selectedGender = 'Male';
-  String _selectedSkill = 'Intermediate';
   bool _isAvailable = true;
 
   @override
@@ -1210,7 +1209,6 @@ class _GuestPlayerSheetState extends State<_GuestPlayerSheet> {
 
     _nameController.text = player.name;
     _selectedGender = player.gender;
-    _selectedSkill = Player.displaySkillLevel(player.skillLevel);
     _isAvailable = player.isAvailable;
   }
 
@@ -1236,14 +1234,12 @@ class _GuestPlayerSheetState extends State<_GuestPlayerSheet> {
                   id: SessionGuestPlayerStore.instance.createGuestId(),
                   name: trimmedName,
                   gender: _selectedGender,
-                  skillLevel: Player.normalizeSkillLevelCode(_selectedSkill),
                   isAvailable: _isAvailable,
                   isGuest: true,
                 ))
             .copyWith(
               name: trimmedName,
               gender: _selectedGender,
-              skillLevel: Player.normalizeSkillLevelCode(_selectedSkill),
               isAvailable: _isAvailable,
               isGuest: true,
               countsAsPlayer: true,
@@ -1362,7 +1358,7 @@ class _GuestPlayerSheetState extends State<_GuestPlayerSheet> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Skill level',
+              'DUPR rating',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
@@ -1371,25 +1367,38 @@ class _GuestPlayerSheetState extends State<_GuestPlayerSheet> {
               ),
             ),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final skill in const [
-                  'Beginner',
-                  'Intermediate',
-                  'Advanced',
-                ])
-                  ChoiceChip(
-                    label: Text(skill),
-                    selected: _selectedSkill == skill,
-                    onSelected: (_) {
-                      setState(() {
-                        _selectedSkill = skill;
-                      });
-                    },
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerHigh(context),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFFCAFD00).withValues(alpha: 0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.playerToEdit?.displayDuprLabel ?? 'DUPR 2.00 BASELINE',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textMain(context),
+                    ),
                   ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Session guests start from the same baseline and are classified automatically from recorded results.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.5,
+                      color: AppColors.textMuted(context),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             SwitchListTile.adaptive(

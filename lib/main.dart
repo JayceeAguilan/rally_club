@@ -17,7 +17,6 @@ import 'models/announcement_inbox_status.dart';
 import 'auth_provider.dart';
 import 'auth_gate.dart';
 import 'announcement_notification_utils.dart';
-import 'notification_service.dart';
 
 class AppColors {
   static bool isDark(BuildContext context) =>
@@ -67,8 +66,6 @@ void main() async {
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
-  await NotificationService.instance.initialize();
-
   runApp(
     ChangeNotifierProvider(
       create: (_) => AuthProvider(),
@@ -88,7 +85,6 @@ class KineticCourtApp extends StatelessWidget {
         return MaterialApp(
           title: 'Rally Club',
           debugShowCheckedModeBanner: false,
-          scaffoldMessengerKey: appScaffoldMessengerKey,
           themeMode: currentMode,
           theme: ThemeData(
             useMaterial3: true,
@@ -189,34 +185,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void initState() {
     super.initState();
-    pendingNotificationNavigationIndex.addListener(
-      _consumePendingNotificationNavigation,
-    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _consumePendingNotificationNavigation();
       _refreshAnnouncementInboxStatus();
     });
-  }
-
-  @override
-  void dispose() {
-    pendingNotificationNavigationIndex.removeListener(
-      _consumePendingNotificationNavigation,
-    );
-    super.dispose();
-  }
-
-  void _consumePendingNotificationNavigation() {
-    final pendingIndex = pendingNotificationNavigationIndex.value;
-    if (!mounted || pendingIndex == null) {
-      return;
-    }
-
-    pendingNotificationNavigationIndex.value = null;
-    _selectIndex(pendingIndex);
-    if (mainScaffoldKey.currentState?.isDrawerOpen ?? false) {
-      mainScaffoldKey.currentState?.closeDrawer();
-    }
   }
 
   void _selectIndex(int index) {

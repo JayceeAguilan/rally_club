@@ -8,6 +8,9 @@ void main() {
       'name': 'Alice',
       'gender': 'Female',
       'skillLevel': 'Adv',
+      'duprRating': 4.35,
+      'duprMatchesPlayed': 9,
+      'duprLastUpdatedAt': '2025-06-02T10:00:00.000',
       'isAvailable': 1,
       'notes': 'Left-handed',
       'lastResult': 'win',
@@ -21,118 +24,112 @@ void main() {
     };
 
     group('fromMap', () {
-      test('creates instance with all fields', () {
-        final p = Player.fromMap(fullMap);
+      test('creates instance with DUPR fields and legacy values', () {
+        final player = Player.fromMap(fullMap);
 
-        expect(p.id, 'p1');
-        expect(p.name, 'Alice');
-        expect(p.gender, 'Female');
-        expect(p.skillLevel, 'Adv');
-        expect(p.isAvailable, true);
-        expect(p.notes, 'Left-handed');
-        expect(p.lastResult, 'win');
-        expect(p.isActive, true);
-        expect(p.clubId, 'c1');
-        expect(p.ownerUid, 'u1');
-        expect(p.isLegacy, false);
+        expect(player.id, 'p1');
+        expect(player.name, 'Alice');
+        expect(player.gender, 'Female');
+        expect(player.skillLevel, 'Adv');
+        expect(player.duprRating, 4.35);
+        expect(player.duprMatchesPlayed, 9);
+        expect(player.duprLastUpdatedAt, '2025-06-02T10:00:00.000');
+        expect(player.displaySkillLabel, 'Intermediate');
+        expect(player.displayDuprRating, '4.35');
+        expect(player.isAvailable, isTrue);
       });
 
-      test('converts int 0 to false for boolean fields', () {
-        final p = Player.fromMap({
+      test('defaults to unrated baseline when DUPR fields are missing', () {
+        final player = Player.fromMap({
+          'name': 'Bob',
+          'gender': 'Male',
+          'isAvailable': 0,
+        });
+
+        expect(player.id, isNull);
+        expect(player.notes, '');
+        expect(player.lastResult, 'none');
+        expect(player.isActive, isTrue);
+        expect(player.duprRating, 2.0);
+        expect(player.duprMatchesPlayed, 0);
+        expect(player.displaySkillLabel, 'Unrated');
+        expect(player.displayDuprLabel, 'DUPR 2.00 BASELINE');
+      });
+
+      test('converts int flags to booleans', () {
+        final player = Player.fromMap({
           ...fullMap,
           'isAvailable': 0,
           'isActive': 0,
           'isLegacy': 1,
+          'isGuest': 1,
         });
 
-        expect(p.isAvailable, false);
-        expect(p.isActive, false);
-        expect(p.isLegacy, true);
-      });
-
-      test('defaults missing optional fields', () {
-        final p = Player.fromMap({
-          'name': 'Bob',
-          'gender': 'Male',
-          'skillLevel': 'Beg',
-          'isAvailable': 0,
-        });
-
-        expect(p.id, isNull);
-        expect(p.notes, '');
-        expect(p.lastResult, 'none');
-        expect(p.isActive, true);
-        expect(p.isLegacy, false);
-        expect(p.clubId, isNull);
-        expect(p.ownerUid, isNull);
+        expect(player.isAvailable, isFalse);
+        expect(player.isActive, isFalse);
+        expect(player.isLegacy, isTrue);
+        expect(player.isGuest, isTrue);
       });
     });
 
     group('toMap', () {
-      test('converts booleans to integers', () {
-        final p = Player(
+      test('converts booleans to integers and persists DUPR fields', () {
+        final player = Player(
           name: 'Carol',
           gender: 'Female',
-          skillLevel: 'Int',
+          duprRating: 3.75,
+          duprMatchesPlayed: 6,
+          duprLastUpdatedAt: '2025-06-01T10:00:00.000',
           isAvailable: true,
           isActive: false,
           isLegacy: true,
         );
 
-        final map = p.toMap();
+        final map = player.toMap();
 
         expect(map['isAvailable'], 1);
         expect(map['isActive'], 0);
         expect(map['isLegacy'], 1);
+        expect(map['duprRating'], 3.75);
+        expect(map['duprMatchesPlayed'], 6);
+        expect(map['duprLastUpdatedAt'], '2025-06-01T10:00:00.000');
+        expect(map.containsKey('skillLevel'), isFalse);
       });
 
-      test('sets createdAt and updatedAt timestamps', () {
-        final p = Player(
+      test('sets timestamps when missing', () {
+        final player = Player(
           name: 'Dave',
           gender: 'Male',
-          skillLevel: 'Advanced',
           isAvailable: false,
         );
 
-        final map = p.toMap();
+        final map = player.toMap();
 
         expect(map['createdAt'], isNotNull);
         expect(map['updatedAt'], isNotNull);
+        expect(map['duprLastUpdatedAt'], isNotNull);
       });
 
       test('preserves existing createdAt', () {
-        final p = Player(
+        final player = Player(
           name: 'Eve',
           gender: 'Female',
-          skillLevel: 'Beg',
           isAvailable: true,
           createdAt: '2025-01-01',
         );
 
-        final map = p.toMap();
+        final map = player.toMap();
 
         expect(map['createdAt'], '2025-01-01');
       });
 
-      test('normalizes long-form skill levels to canonical codes', () {
-        final p = Player(
-          name: 'Eve',
-          gender: 'Female',
-          skillLevel: 'Beginner',
-          isAvailable: true,
-        );
-
-        final map = p.toMap();
-
-        expect(map['skillLevel'], 'Beg');
-      });
-
-      test('profile update map contains only editable fields', () {
-        final p = Player(
+      test('profile update map contains only editable profile fields', () {
+        final player = Player(
           id: 'p3',
           name: 'Gina',
           gender: 'Female',
-          skillLevel: 'Adv',
+          duprRating: 4.8,
+          duprMatchesPlayed: 12,
           isAvailable: true,
           notes: 'Ready to play',
           lastResult: 'win',
@@ -144,12 +141,11 @@ void main() {
           isLegacy: true,
         );
 
-        final map = p.toProfileUpdateMap();
+        final map = player.toProfileUpdateMap();
 
         expect(map.keys.toSet(), {
           'name',
           'gender',
-          'skillLevel',
           'isAvailable',
           'notes',
           'profileImageBase64',
@@ -157,19 +153,20 @@ void main() {
         });
         expect(map['name'], 'Gina');
         expect(map['isAvailable'], 1);
-        expect(map.containsKey('clubId'), isFalse);
-        expect(map.containsKey('ownerUid'), isFalse);
-        expect(map.containsKey('countsAsPlayer'), isFalse);
+        expect(map.containsKey('duprRating'), isFalse);
+        expect(map.containsKey('skillLevel'), isFalse);
       });
     });
 
     group('toMap / fromMap round-trip', () {
-      test('restores all fields after serialization', () {
+      test('restores DUPR values after serialization', () {
         final original = Player(
           id: 'p2',
           name: 'Frank',
           gender: 'Male',
-          skillLevel: 'Advanced',
+          duprRating: 4.62,
+          duprMatchesPlayed: 18,
+          duprLastUpdatedAt: '2025-06-10T09:00:00.000',
           isAvailable: false,
           notes: 'Prefers morning sessions',
           lastResult: 'loss',
@@ -185,7 +182,9 @@ void main() {
         expect(restored.id, original.id);
         expect(restored.name, original.name);
         expect(restored.gender, original.gender);
-        expect(restored.skillLevel, 'Adv');
+        expect(restored.duprRating, original.duprRating);
+        expect(restored.duprMatchesPlayed, original.duprMatchesPlayed);
+        expect(restored.duprLastUpdatedAt, original.duprLastUpdatedAt);
         expect(restored.isAvailable, original.isAvailable);
         expect(restored.notes, original.notes);
         expect(restored.lastResult, original.lastResult);
@@ -199,42 +198,33 @@ void main() {
 
     group('copyWith', () {
       test('overrides only specified fields', () {
-        final p = Player.fromMap(fullMap);
-        final copy = p.copyWith(name: 'Alicia', skillLevel: 'Advanced');
-
-        expect(copy.name, 'Alicia');
-        expect(copy.skillLevel, 'Advanced');
-        expect(copy.id, p.id);
-        expect(copy.gender, p.gender);
-        expect(copy.isAvailable, p.isAvailable);
-        expect(copy.clubId, p.clubId);
-      });
-
-      test('can toggle boolean fields', () {
-        final p = Player.fromMap(fullMap);
-        final copy = p.copyWith(
-          isAvailable: false,
-          isActive: false,
-          isLegacy: true,
+        final player = Player.fromMap(fullMap);
+        final copy = player.copyWith(
+          name: 'Alicia',
+          duprRating: 4.9,
+          duprMatchesPlayed: 14,
         );
 
-        expect(copy.isAvailable, false);
-        expect(copy.isActive, false);
-        expect(copy.isLegacy, true);
+        expect(copy.name, 'Alicia');
+        expect(copy.duprRating, 4.9);
+        expect(copy.duprMatchesPlayed, 14);
+        expect(copy.id, player.id);
+        expect(copy.gender, player.gender);
+        expect(copy.isAvailable, player.isAvailable);
+        expect(copy.clubId, player.clubId);
       });
 
       test('with no args returns identical values', () {
-        final p = Player.fromMap(fullMap);
-        final copy = p.copyWith();
+        final player = Player.fromMap(fullMap);
+        final copy = player.copyWith();
 
-        expect(copy.name, p.name);
-        expect(copy.gender, p.gender);
-        expect(copy.skillLevel, p.skillLevel);
-        expect(copy.isAvailable, p.isAvailable);
-        expect(copy.isActive, p.isActive);
-        expect(copy.isLegacy, p.isLegacy);
-        expect(copy.clubId, p.clubId);
-        expect(copy.ownerUid, p.ownerUid);
+        expect(copy.name, player.name);
+        expect(copy.gender, player.gender);
+        expect(copy.duprRating, player.duprRating);
+        expect(copy.duprMatchesPlayed, player.duprMatchesPlayed);
+        expect(copy.isAvailable, player.isAvailable);
+        expect(copy.isActive, player.isActive);
+        expect(copy.isLegacy, player.isLegacy);
       });
     });
 
@@ -273,25 +263,58 @@ void main() {
       });
     });
 
-    group('skill normalization', () {
-      test('maps legacy pro values to advanced', () {
-        expect(Player.normalizeSkillLevelCode('Pro'), 'Adv');
-        expect(Player.displaySkillLevel('Pro'), 'Advanced');
+    group('derived DUPR labels', () {
+      test('returns unrated label until a recorded match exists', () {
+        final player = Player(
+          name: 'Baseline',
+          gender: 'Male',
+          isAvailable: true,
+        );
+
+        expect(player.displaySkillLabel, 'Unrated');
+        expect(player.matchesSkillFilter('Unrated'), isTrue);
       });
 
-      test('matches abbreviated and full-form skills in filters', () {
-        final player = Player.fromMap({...fullMap, 'skillLevel': 'Beginner'});
+      test('maps rating bands to beginner, intermediate, and advanced', () {
+        final beginner = Player(
+          name: 'Beginner',
+          gender: 'Female',
+          duprRating: 2.8,
+          duprMatchesPlayed: 2,
+          isAvailable: true,
+        );
+        final intermediate = Player(
+          name: 'Intermediate',
+          gender: 'Female',
+          duprRating: 3.7,
+          duprMatchesPlayed: 4,
+          isAvailable: true,
+        );
+        final advanced = Player(
+          name: 'Advanced',
+          gender: 'Female',
+          duprRating: 4.8,
+          duprMatchesPlayed: 7,
+          isAvailable: true,
+        );
 
-        expect(player.matchesSkillFilter('Beginner'), isTrue);
-        expect(player.matchesSkillFilter('Beg'), isTrue);
-        expect(player.matchesSkillFilter('Intermediate'), isFalse);
+        expect(beginner.displaySkillLabel, 'Beginner');
+        expect(intermediate.displaySkillLabel, 'Intermediate');
+        expect(advanced.displaySkillLabel, 'Advanced');
       });
 
-      test('returns user-friendly display labels', () {
-        expect(Player.displaySkillLevel('Beg'), 'Beginner');
-        expect(Player.displaySkillLevel('Intermediate'), 'Intermediate');
-        expect(Player.displaySkillLevel('Adv'), 'Advanced');
-        expect(Player.displaySkillLevel('Pro'), 'Advanced');
+      test('matches filters against derived labels', () {
+        final player = Player(
+          name: 'Jordan',
+          gender: 'Male',
+          duprRating: 3.9,
+          duprMatchesPlayed: 5,
+          isAvailable: true,
+        );
+
+        expect(player.matchesSkillFilter('All'), isTrue);
+        expect(player.matchesSkillFilter('Intermediate'), isTrue);
+        expect(player.matchesSkillFilter('Advanced'), isFalse);
       });
     });
   });

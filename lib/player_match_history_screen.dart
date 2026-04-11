@@ -350,7 +350,7 @@ class _PlayerMatchHistoryScreenState extends State<PlayerMatchHistoryScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${widget.player.displaySkillLabel} • ${widget.player.gender}',
+                  '${widget.player.displayDuprLabel} • ${widget.player.displaySkillLabel} • ${widget.player.gender}',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,

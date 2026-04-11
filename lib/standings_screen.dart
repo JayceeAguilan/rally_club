@@ -17,10 +17,10 @@ class StandingsScreen extends StatefulWidget {
 class StandingsScreenState extends State<StandingsScreen> {
   late Future<List<Map<String, dynamic>>> _standingsFuture;
   List<Map<String, dynamic>>? _cachedStandings;
-  String _sortBy = 'winPercent';
+  String _sortBy = 'duprRating';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _filterSkill = 'All'; // 'All', 'Beginner', 'Intermediate', 'Advanced'
+  String _filterSkill = 'All';
   String _filterGender = 'All'; // 'All', 'Male', 'Female'
 
   @override
@@ -51,6 +51,17 @@ class StandingsScreenState extends State<StandingsScreen> {
 
   void _sortStandings(List<Map<String, dynamic>> standings) {
     switch (_sortBy) {
+      case 'duprRating':
+        standings.sort((a, b) {
+          final playerA = a['player'] as Player;
+          final playerB = b['player'] as Player;
+          final cmp = playerB.effectiveDuprRating.compareTo(
+            playerA.effectiveDuprRating,
+          );
+          if (cmp != 0) return cmp;
+          return (b['wins'] as int).compareTo(a['wins'] as int);
+        });
+        break;
       case 'wins':
         standings.sort(
           (a, b) => (b['wins'] as int).compareTo(a['wins'] as int),
@@ -119,7 +130,6 @@ class StandingsScreenState extends State<StandingsScreen> {
           if (snapshot.hasData) {
             _cachedStandings = snapshot.data;
           }
-
           final standings = _cachedStandings;
 
           if (standings == null) {
@@ -258,7 +268,7 @@ class StandingsScreenState extends State<StandingsScreen> {
                                     rank: '#${index + 1}',
                                     name: player.name,
                                     subtitle:
-                                        '${player.displaySkillLabel.toUpperCase()} • ${player.gender.toUpperCase()}',
+                                        '${player.displayDuprLabel.toUpperCase()} • ${player.displaySkillLabel.toUpperCase()} • ${player.gender.toUpperCase()}',
                                     wins: wins.toString(),
                                     losses: losses.toString(),
                                     winPercent: '${winPct.toStringAsFixed(0)}%',
@@ -341,6 +351,8 @@ class StandingsScreenState extends State<StandingsScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 12),
+                                  _buildSortChip('DUPR', 'duprRating'),
+                                  const SizedBox(width: 8),
                                   _buildSortChip('Win %', 'winPercent'),
                                   const SizedBox(width: 8),
                                   _buildSortChip('Most Wins', 'wins'),
@@ -356,13 +368,13 @@ class StandingsScreenState extends State<StandingsScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            // Skill filter row
+                            // DUPR band filter row
                             SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: Row(
                                 children: [
                                   Text(
-                                    'LEVEL:',
+                                    'DUPR:',
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
@@ -373,6 +385,12 @@ class StandingsScreenState extends State<StandingsScreen> {
                                   const SizedBox(width: 12),
                                   _buildFilterChip(
                                     'All',
+                                    _filterSkill,
+                                    (v) => setState(() => _filterSkill = v),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildFilterChip(
+                                    'Unrated',
                                     _filterSkill,
                                     (v) => setState(() => _filterSkill = v),
                                   ),
@@ -528,6 +546,12 @@ class StandingsScreenState extends State<StandingsScreen> {
                                 _searchQuery.isEmpty ||
                                 player.name.toLowerCase().contains(
                                   _searchQuery,
+                                ) ||
+                                player.displayDuprLabel.toLowerCase().contains(
+                                  _searchQuery,
+                                ) ||
+                                player.displaySkillLabel.toLowerCase().contains(
+                                  _searchQuery,
                                 );
                             final matchesSkill = player.matchesSkillFilter(
                               _filterSkill,
@@ -586,7 +610,7 @@ class StandingsScreenState extends State<StandingsScreen> {
                                 child: _buildListRow(
                                   '${idx + 1}',
                                   player.name,
-                                  '${player.displaySkillLabel.toUpperCase()} • ${player.gender.toUpperCase()}',
+                                  '${player.displayDuprLabel.toUpperCase()} • ${player.displaySkillLabel.toUpperCase()} • ${player.gender.toUpperCase()}',
                                   '$wins / $losses',
                                   '$played',
                                   winPct > 0

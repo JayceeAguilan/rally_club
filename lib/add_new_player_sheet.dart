@@ -32,7 +32,6 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   String _selectedGender = 'Male';
-  String _selectedSkill = 'Intermediate';
   bool _isAvailable = true;
   String? _profileImageBase64;
 
@@ -115,9 +114,6 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
       _nameController.text = widget.playerToEdit!.name;
       _notesController.text = widget.playerToEdit!.notes;
       _selectedGender = widget.playerToEdit!.gender;
-      _selectedSkill = Player.displaySkillLevel(
-        widget.playerToEdit!.skillLevel,
-      );
       _isAvailable = widget.playerToEdit!.isAvailable;
       _profileImageBase64 = widget.playerToEdit!.profileImageBase64;
     }
@@ -290,7 +286,7 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Gender and Skill level
+                  // Gender
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -320,34 +316,44 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Skill
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildFormLabel('SKILL LEVEL'),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: AppColors.divider(context),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                children: [
-                                  _buildSegmentButton('SKILL', 'Beginner'),
-                                  _buildSegmentButton('SKILL', 'Intermediate'),
-                                  _buildSegmentButton('SKILL', 'Advanced'),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerHigh(context),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFFCAFD00).withValues(alpha: 0.2),
                       ),
-                    ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFormLabel('DUPR RATING'),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.playerToEdit != null
+                              ? widget.playerToEdit!.displayDuprLabel
+                              : 'DUPR 2.00 BASELINE',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textMain(context),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.playerToEdit != null
+                              ? 'This player\'s skill band is now derived from recorded match results.'
+                              : 'New players all start at the same baseline and become rated automatically from recorded match results.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.5,
+                            color: AppColors.textMuted(context),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 32),
 
@@ -505,7 +511,6 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
                               id: widget.playerToEdit?.id,
                               name: _nameController.text.trim(),
                               gender: _selectedGender,
-                              skillLevel: _selectedSkill,
                               isAvailable: _isAvailable,
                               notes: _notesController.text.trim(),
                               profileImageBase64: _profileImageBase64,
@@ -513,7 +518,6 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
                           : widget.playerToEdit!.copyWith(
                               name: _nameController.text.trim(),
                               gender: _selectedGender,
-                              skillLevel: _selectedSkill,
                               isAvailable: _isAvailable,
                               notes: _notesController.text.trim(),
                               profileImageBase64: _profileImageBase64,
@@ -587,9 +591,7 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
   }
 
   Widget _buildSegmentButton(String group, String title) {
-    final bool isSelected =
-        (group == 'GENDER' && _selectedGender == title) ||
-        (group == 'SKILL' && _selectedSkill == title);
+    final bool isSelected = group == 'GENDER' && _selectedGender == title;
     final isDark = AppColors.isDark(context);
 
     return Expanded(
@@ -597,7 +599,6 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
         onTap: () {
           setState(() {
             if (group == 'GENDER') _selectedGender = title;
-            if (group == 'SKILL') _selectedSkill = title;
           });
         },
         child: Container(
@@ -623,7 +624,7 @@ class _AddNewPlayerSheetState extends State<AddNewPlayerSheet> {
           child: Text(
             title.toUpperCase(),
             style: TextStyle(
-              fontSize: group == 'SKILL' ? 9 : 10,
+              fontSize: 10,
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
               color: isSelected
                   ? AppColors.primary(context)

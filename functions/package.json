@@ -1,12 +1,13 @@
 {
   "name": "rally-club-functions",
+  "description": "Optional Blaze-only Cloud Functions for Rally Club. Core app features work without deploying this package on Spark.",
   "private": true,
   "main": "index.js",
   "engines": {
     "node": "20"
   },
   "scripts": {
-    "deploy": "firebase deploy --only functions"
+    "deploy:blaze": "firebase deploy --only functions"
   },
   "dependencies": {
     "firebase-admin": "^13.7.0",

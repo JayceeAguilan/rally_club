@@ -42,6 +42,13 @@ service cloud.firestore {
         && currentUserData().clubId == clubId;
     }
 
+    function playerCreateUsesDuprBaseline() {
+      return !request.resource.data.keys().hasAny(['skillLevel'])
+        && request.resource.data.duprRating == 2.0
+        && request.resource.data.duprMatchesPlayed == 0
+        && request.resource.data.duprLastUpdatedAt is string;
+    }
+
     function ownProfileUpdateAllowed(playerId) {
       return isSignedIn()
         && (
@@ -51,7 +58,6 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'name',
           'gender',
-          'skillLevel',
           'isAvailable',
           'notes',
           'profileImageBase64',
@@ -84,6 +90,24 @@ service cloud.firestore {
     function adminOnlyPlayerResultUpdate() {
       return isAdminForClub(resource.data.clubId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastResult']);
+    }
+
+    function adminManagedPlayerUpdateAllowed() {
+      return isAdminForClub(resource.data.clubId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name',
+          'gender',
+          'isAvailable',
+          'notes',
+          'profileImageBase64',
+          'updatedAt',
+          'countsAsPlayer',
+          'isActive',
+          'lastResult',
+          'duprRating',
+          'duprMatchesPlayed',
+          'duprLastUpdatedAt',
+        ]);
     }
 
     // Deny all by default
@@ -123,12 +147,13 @@ service cloud.firestore {
     match /players/{playerId} {
       allow read: if isSignedIn();
 
-      allow create: if initialOwnPlayerCreateAllowed()
-        || isAdminForClub(request.resource.data.clubId);
+      allow create: if (initialOwnPlayerCreateAllowed()
+        || isAdminForClub(request.resource.data.clubId))
+        && playerCreateUsesDuprBaseline();
 
       allow update: if ownProfileUpdateAllowed(playerId)
         || ownParticipationSyncAllowed(playerId)
-        || isAdminForClub(resource.data.clubId)
+        || adminManagedPlayerUpdateAllowed()
         || adminOnlyPlayerResultUpdate();
 
       allow delete: if false;
@@ -141,6 +166,8 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.clubId is string
         && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.teamAPlayerRatings is string
+        && request.resource.data.teamBPlayerRatings is string
         && isAdmin(request.auth.uid);
 
       allow update, delete: if false;
@@ -189,7 +216,14 @@ service cloud.firestore {
 
     // Migration tracking: only authenticated users can read; writes handled server-side
     match /_migrations/{docId} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.clubId is string
+        && request.resource.data.type is string
+        && isAdminForClub(request.resource.data.clubId);
+
+      allow update, delete: if false;
     }
   }
 }
