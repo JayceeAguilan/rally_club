@@ -172,6 +172,8 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
         return 'Winners & Losers';
       case 'mixed':
         return 'Mixed Doubles';
+      case 'random':
+        return 'Random';
       default:
         return 'Custom';
     }
@@ -332,6 +334,13 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                               _filterMatchLogic,
                               (v) => setState(() => _filterMatchLogic = v),
                               label: 'Mixed',
+                            ),
+                            const SizedBox(width: 6),
+                            _buildChip(
+                              'random',
+                              _filterMatchLogic,
+                              (v) => setState(() => _filterMatchLogic = v),
+                              label: 'Random',
                             ),
                           ],
                         ),

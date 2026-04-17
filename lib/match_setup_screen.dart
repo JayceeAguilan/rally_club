@@ -20,7 +20,7 @@ class MatchSetupScreen extends StatefulWidget {
 
 class MatchSetupScreenState extends State<MatchSetupScreen> {
   String _selectedMode = 'doubles';
-  String _selectedLogic = 'auto';
+  String _selectedLogic = 'random';
   bool _isGenerating = false;
   Future<List<Player>> _playersFuture = Future.value(const <Player>[]);
   List<Player> _guestPlayers = SessionGuestPlayerStore.instance.players;
@@ -187,21 +187,24 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
 
     await Future.delayed(Duration(milliseconds: delayMilliseconds));
 
+    final clubId = auth.appUser!.clubId!;
     final permanentPlayers = await FirebaseService().getPlayers(
-      clubId: auth.appUser!.clubId!,
+      clubId: clubId,
     );
     final logic = (_selectedLogic == 'mixed' && _selectedMode == 'singles')
-        ? 'auto'
+      ? 'random'
         : _selectedLogic;
     final standingsMap = await _loadStandingsMap(
-      clubId: auth.appUser!.clubId!,
+      clubId: clubId,
       logic: logic,
     );
+    final recentMatches = await FirebaseService().getMatches(clubId: clubId);
     final result = MatchGenerator.generate(
       availablePlayers: _buildSessionPlayers(permanentPlayers),
       gameMode: _selectedMode,
       matchLogic: logic,
       playerStandings: standingsMap,
+      recentMatches: recentMatches,
     );
 
     if (!mounted) {
@@ -416,6 +419,14 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                             // Step 2: Matching Logic
                             _buildSectionTitle('02', 'Matching Logic'),
                             const SizedBox(height: 16),
+                            _buildLogicCard(
+                              id: 'random',
+                              title: 'Random',
+                              subtitle:
+                                  'Purely random matchups — all players can play regardless of performance.',
+                              icon: Icons.shuffle,
+                            ),
+                            const SizedBox(height: 12),
                             _buildLogicCard(
                               id: 'auto',
                               title: 'Auto-Balanced',
@@ -848,7 +859,7 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
                                           onPressed: () {
                                             setState(() {
                                               _selectedMode = 'doubles';
-                                              _selectedLogic = 'auto';
+                                              _selectedLogic = 'random';
                                             });
                                           },
                                           icon: const Icon(
@@ -996,7 +1007,7 @@ class MatchSetupScreenState extends State<MatchSetupScreen> {
         setState(() {
           _selectedMode = id;
           if (id == 'singles' && _selectedLogic == 'mixed') {
-            _selectedLogic = 'auto';
+            _selectedLogic = 'random';
           }
         });
       },

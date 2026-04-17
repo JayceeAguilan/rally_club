@@ -52,8 +52,8 @@ class AppColors {
       const Color(0xFF4A5E00);
 }
 
-/// Global theme mode notifier — drives the light/dark toggle across the app.
-final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+/// Global theme mode notifier — follows the device theme by default.
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
 final GlobalKey<ScaffoldState> mainScaffoldKey = GlobalKey<ScaffoldState>();
 final GlobalKey<DashboardScreenState> dashboardKey =

@@ -1,3 +1,4 @@
+import 'models/match_record.dart';
 import 'models/player.dart';
 
 /// Represents a generated match with two teams.
@@ -5,7 +6,7 @@ class GeneratedMatch {
   final List<Player> teamA;
   final List<Player> teamB;
   final String gameMode; // 'singles' or 'doubles'
-  final String matchLogic; // 'auto', 'skill', 'history', 'mixed'
+  final String matchLogic; // 'auto', 'skill', 'history', 'mixed', 'random'
 
   GeneratedMatch({
     required this.teamA,
@@ -29,19 +30,104 @@ class MatchGenerationResult {
 }
 
 class MatchGenerator {
+  static const int _maxRecencyLookback = 10;
+  static const int _candidateAttempts = 20;
+
   /// Current DUPR-derived rating used for balancing algorithms.
   static double _ratingWeight(Player player) {
     return player.effectiveDuprRating;
   }
 
+  /// Canonical key for a pair of player IDs (order-independent).
+  static String _pairKey(String id1, String id2) {
+    return id1.compareTo(id2) < 0 ? '$id1|$id2' : '$id2|$id1';
+  }
+
+  /// Build a recency penalty map from recent match history.
+  /// More recent matches produce higher penalties so the selector avoids them.
+  static Map<String, double> _buildPairPenalties(
+    List<MatchRecord> recentMatches,
+  ) {
+    final penalties = <String, double>{};
+    final lookback = recentMatches.length.clamp(0, _maxRecencyLookback);
+
+    for (int i = 0; i < lookback; i++) {
+      final match = recentMatches[i];
+      final allIds = [
+        ...match.teamAPlayerIdList,
+        ...match.teamBPlayerIdList,
+      ];
+      // Most recent match = highest weight
+      final weight = (lookback - i).toDouble();
+
+      for (int a = 0; a < allIds.length; a++) {
+        for (int b = a + 1; b < allIds.length; b++) {
+          final key = _pairKey(allIds[a], allIds[b]);
+          penalties[key] = (penalties[key] ?? 0) + weight;
+        }
+      }
+    }
+
+    return penalties;
+  }
+
+  /// Score a group of players by how recently they've appeared in the same match.
+  static double _groupPenalty(
+    List<Player> group,
+    Map<String, double> pairPenalties,
+  ) {
+    double penalty = 0;
+    for (int a = 0; a < group.length; a++) {
+      for (int b = a + 1; b < group.length; b++) {
+        final id1 = group[a].id ?? '';
+        final id2 = group[b].id ?? '';
+        if (id1.isNotEmpty && id2.isNotEmpty) {
+          penalty += pairPenalties[_pairKey(id1, id2)] ?? 0;
+        }
+      }
+    }
+    return penalty;
+  }
+
+  /// Pick [count] players from [pool] that minimize overlap with recent matches.
+  /// Tries [_candidateAttempts] random selections and returns the best one.
+  static List<Player> _selectDiverse(
+    List<Player> pool,
+    int count,
+    Map<String, double> pairPenalties,
+  ) {
+    if (pairPenalties.isEmpty || pool.length <= count) {
+      pool.shuffle();
+      return pool.take(count).toList();
+    }
+
+    List<Player>? best;
+    double bestPenalty = double.infinity;
+
+    for (int i = 0; i < _candidateAttempts; i++) {
+      pool.shuffle();
+      final candidate = pool.take(count).toList();
+      final penalty = _groupPenalty(candidate, pairPenalties);
+
+      if (penalty < bestPenalty) {
+        bestPenalty = penalty;
+        best = List.of(candidate);
+        if (penalty == 0) break;
+      }
+    }
+
+    return best ?? (pool..shuffle()).take(count).toList();
+  }
+
   /// Main entry point.
   /// [playerStandings] is optional and only used for 'history' (Winners & Losers) mode.
-  /// It should be a map of playerId → { 'wins': int, 'losses': int }.
+  /// [recentMatches] is used to avoid repeating the same player groups.
   static MatchGenerationResult generate({
     required List<Player> availablePlayers,
     required String gameMode,
     required String matchLogic,
     Map<String, Map<String, int>>? playerStandings,
+    List<MatchRecord>? recentMatches,
   }) {
     // Filter to only available players
     final players = availablePlayers.where((p) => p.isAvailable).toList();
@@ -61,11 +147,16 @@ class MatchGenerator {
       );
     }
 
+    // Sort recent matches by date descending for recency weighting
+    final sortedRecent = [...?recentMatches]
+      ..sort((a, b) => b.date.compareTo(a.date));
+    final pairPenalties = _buildPairPenalties(sortedRecent);
+
     switch (matchLogic) {
       case 'auto':
-        return _autoBalanced(players, gameMode);
+        return _autoBalanced(players, gameMode, pairPenalties);
       case 'skill':
-        return _skillSeparated(players, gameMode);
+        return _skillSeparated(players, gameMode, pairPenalties);
       case 'history':
         return _winnersAndLosers(
           players,
@@ -73,24 +164,53 @@ class MatchGenerator {
           playerStandings ?? <String, Map<String, int>>{},
         );
       case 'mixed':
-        return _mixedDoubles(players);
+        return _mixedDoubles(players, pairPenalties);
+      case 'random':
+        return _random(players, gameMode);
       default:
-        return _autoBalanced(players, gameMode);
+        return _autoBalanced(players, gameMode, pairPenalties);
     }
   }
 
-  /// AUTO-BALANCED: Randomly select players, then balance teams by skill weight.
-  static MatchGenerationResult _autoBalanced(
+  /// RANDOM: Purely random player selection, no skill or history consideration.
+  static MatchGenerationResult _random(
     List<Player> players,
     String gameMode,
   ) {
     final int requiredCount = gameMode == 'singles' ? 2 : 4;
+    final shuffled = List<Player>.from(players)..shuffle();
+    final selected = shuffled.take(requiredCount).toList();
 
-    // Shuffle the entire pool for true randomness
-    players.shuffle();
+    if (gameMode == 'singles') {
+      return MatchGenerationResult.success(
+        GeneratedMatch(
+          teamA: [selected[0]],
+          teamB: [selected[1]],
+          gameMode: gameMode,
+          matchLogic: 'random',
+        ),
+      );
+    } else {
+      return MatchGenerationResult.success(
+        GeneratedMatch(
+          teamA: [selected[0], selected[1]],
+          teamB: [selected[2], selected[3]],
+          gameMode: gameMode,
+          matchLogic: 'random',
+        ),
+      );
+    }
+  }
 
-    // Randomly pick the required number of players
-    final selected = players.take(requiredCount).toList();
+  /// AUTO-BALANCED: Select players avoiding recent pairings, then balance teams by skill.
+  static MatchGenerationResult _autoBalanced(
+    List<Player> players,
+    String gameMode,
+    Map<String, double> pairPenalties,
+  ) {
+    final int requiredCount = gameMode == 'singles' ? 2 : 4;
+
+    final selected = _selectDiverse(players, requiredCount, pairPenalties);
 
     // Sort the selected players by skill for balanced team assignment
     selected.sort(
@@ -123,6 +243,7 @@ class MatchGenerator {
   static MatchGenerationResult _skillSeparated(
     List<Player> players,
     String gameMode,
+    Map<String, double> pairPenalties,
   ) {
     final int requiredCount = gameMode == 'singles' ? 2 : 4;
 
@@ -148,13 +269,17 @@ class MatchGenerator {
     }
 
     final pool = groups[eligibleSkill]!;
-    pool.shuffle();
+    final selected = _selectDiverse(
+      pool,
+      requiredCount,
+      pairPenalties,
+    );
 
     if (gameMode == 'singles') {
       return MatchGenerationResult.success(
         GeneratedMatch(
-          teamA: [pool[0]],
-          teamB: [pool[1]],
+          teamA: [selected[0]],
+          teamB: [selected[1]],
           gameMode: gameMode,
           matchLogic: 'skill',
         ),
@@ -162,8 +287,8 @@ class MatchGenerator {
     } else {
       return MatchGenerationResult.success(
         GeneratedMatch(
-          teamA: [pool[0], pool[1]],
-          teamB: [pool[2], pool[3]],
+          teamA: [selected[0], selected[1]],
+          teamB: [selected[2], selected[3]],
           gameMode: gameMode,
           matchLogic: 'skill',
         ),
@@ -218,7 +343,10 @@ class MatchGenerator {
 
   /// MIXED DOUBLES: Each team must have 1 male and 1 female. Doubles only.
   /// Also tries to balance combined skill totals between teams.
-  static MatchGenerationResult _mixedDoubles(List<Player> players) {
+  static MatchGenerationResult _mixedDoubles(
+    List<Player> players,
+    Map<String, double> pairPenalties,
+  ) {
     final males = players.where((p) => p.gender == 'Male').toList();
     final females = players.where((p) => p.gender == 'Female').toList();
 
@@ -234,12 +362,31 @@ class MatchGenerator {
       );
     }
 
-    males.shuffle();
-    females.shuffle();
+    // Try multiple male/female combinations, pick least recently paired
+    List<Player>? bestGroup;
+    double bestPenalty = double.infinity;
 
-    // Pick 2 males and 2 females
-    final m1 = males[0], m2 = males[1];
-    final f1 = females[0], f2 = females[1];
+    for (int i = 0; i < _candidateAttempts; i++) {
+      males.shuffle();
+      females.shuffle();
+      final group = [males[0], males[1], females[0], females[1]];
+      final penalty = _groupPenalty(group, pairPenalties);
+
+      if (penalty < bestPenalty) {
+        bestPenalty = penalty;
+        bestGroup = List.of(group);
+        if (penalty == 0) break;
+      }
+    }
+
+    if (bestGroup == null) {
+      males.shuffle();
+      females.shuffle();
+      bestGroup = [males[0], males[1], females[0], females[1]];
+    }
+
+    final m1 = bestGroup[0], m2 = bestGroup[1];
+    final f1 = bestGroup[2], f2 = bestGroup[3];
 
     // Try both team combinations and pick the most balanced:
     // Option 1: Team A = m1+f1, Team B = m2+f2

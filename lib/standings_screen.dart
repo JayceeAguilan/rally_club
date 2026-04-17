@@ -248,7 +248,7 @@ class StandingsScreenState extends State<StandingsScreen> {
 
                       // Carousel
                       SizedBox(
-                        height: 180,
+                        height: 200,
                         child: topPlayers.isEmpty
                             ? Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -944,7 +944,6 @@ class StandingsScreenState extends State<StandingsScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,

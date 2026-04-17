@@ -105,6 +105,8 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
         return 'Winners & Losers';
       case 'mixed':
         return 'Mixed Doubles';
+      case 'random':
+        return 'Random';
       default:
         return 'Custom';
     }
@@ -625,11 +627,6 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
                           ),
                         ],
                       ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: _buildCancelMatchButton(context),
-                    ),
                     const SizedBox(height: 110),
                   ],
                 ),
@@ -1011,23 +1008,6 @@ class _MatchResultScreenState extends State<MatchResultScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCancelMatchButton(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: _isSaving ? null : _confirmCancelMatch,
-      icon: const Icon(Icons.cancel_outlined),
-      label: const Text(
-        'Cancel Match',
-        style: TextStyle(fontWeight: FontWeight.w800),
-      ),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.redAccent,
-        side: const BorderSide(color: Colors.redAccent, width: 1.4),
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
